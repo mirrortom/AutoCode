@@ -1,0 +1,66 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using Microsoft.AspNetCore.Http;
+using System.Threading.Tasks;
+using @Model.nameSpace@(".BLL");
+using @Model.nameSpace@(".Entity");
+
+namespace @Model.nameSpace
+{
+    public class @Model.className : ApiBase
+    {
+        [HTTPPOST]
+        public async Task List()
+        {
+            var para = this.ParaForm<@Model.entityName>();
+            List<@Model.entityName> data = @(Model.bllName).List(para);
+            if (data.Count == 0)
+            {
+                await this.Json(new { errmsg = para.ErrorMsg, errcode = para.ErrorCode });
+                return;
+            }
+            // 返回字段按需设定
+            var redata = data.Select(o => new
+            {
+@Model.fieldList
+            });
+            await this.Json(new { list = redata, errcode = 200 });
+        }
+
+        [HTTPPOST]
+        public async Task Item()
+        {
+            var para = this.ParaForm<@Model.entityName>();
+            @Model.entityName data = @(Model.bllName).GetById(para);
+            if(data == null)
+            {
+                await this.Json(new { errmsg = para.ErrorMsg, errcode = para.ErrorCode });
+                return;
+            }
+            // 返回字段按需设定
+            var redata = new
+            {
+@Model.fieldItem
+            };
+            await this.Json(new { item = redata, errcode = 200 });
+        }
+
+        [HTTPPOST]
+        public async Task Add()
+        {
+            var para = this.ParaForm<@Model.entityName>();
+            @(Model.bllName).Add(para);
+            await this.Json(new { errmsg = para.ErrorMsg, errcode = para.ErrorCode });
+        }
+
+        [HTTPPOST]
+        public async Task UpdateItemById()
+        {
+            var para = this.ParaForm<@Model.entityName>();
+            @(Model.bllName).UpdateById(para);
+            await this.Json(new { errmsg = para.ErrorMsg, errcode = para.ErrorCode });
+        }
+    }
+}

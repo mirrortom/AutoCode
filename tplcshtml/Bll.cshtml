@@ -1,0 +1,103 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using @Model.nameSpace@(".DAL");
+using @Model.nameSpace@(".Entity");
+
+@{ 
+    string entityListType = Model.entityName + "[]";
+}
+namespace @Model.nameSpace@(".BLL")
+{
+    public class @Model.className
+    {
+        /// <summary>
+        /// 列表:查找出符合条件的多个记录.如果没找到返回空列表
+        /// </summary>
+        /// <param name="para">查询条件参数</param>
+        /// <returns></returns>
+        public static List<@Model.entityName> List(@Model.entityName para)
+        {
+            @entityListType data = null;
+            if (para.IsPagePart == 0)
+            {
+                data = @(Model.dalName).All(para);
+            }
+            else
+            {
+                // 若分页则要验证分页参数
+                para.SetPageIndexAndSize();
+                data = @(Model.dalName).List(para);
+            }
+            if(data == null)
+                return new List<@Model.entityName>();
+            for (int i = 0; i < data.Length; i++)
+            {
+                data[i].RowNumber = para.IsPagePart == 0
+                    ? 1 + i : para.StartRowIndex + i;
+            }
+            return data.ToList();
+        }
+
+        /// <summary>
+        /// 一个:查找指定ID(主键)的一个记录.如果没找到返回null
+        /// </summary>
+        /// <param name="id">主键ID</param>
+        /// <returns></returns>
+        public static @Model.entityName GetById(@Model.entityName para)
+        {
+            return @(Model.dalName).GetById(para);
+        }
+
+        /// <summary>
+        /// 添加一个:增加一个新的记录
+        /// </summary>
+        /// <param name="para">新记录实体</param>
+        /// <returns></returns>
+        public static void Add(@Model.entityName para)
+        {
+            if (FormCheck(para) == false)
+               return;
+            para.CreateTime = DateTimeOffset.Now;
+            int isok = @(Model.dalName).Add(para);
+            if (isok == 1) {
+                para.ErrorCode = 200;
+                return;
+            }
+            para.ErrorMsg = "添加失败,数据库错误!";
+        }
+
+        /// <summary>
+        /// 更新一个:查找指定ID(主键)的一个记录,然后更新之
+        /// </summary>
+        /// <param name="para">查询条件参数</param>
+        /// <returns></returns>
+        public static void UpdateById(@Model.entityName para)
+        {
+            if (FormCheck(para) == false)
+              return;
+            para.UpdateTime = DateTimeOffset.Now;
+            int isok = @(Model.dalName).UpdateById(para);
+            if (isok == 1) {
+                para.ErrorCode = 200;
+                return;
+            }
+            para.ErrorMsg = "更新失败,数据库错误!";
+        }
+        /// <summary>
+        /// 验证表单数据
+        /// </summary>
+        /// <returns></returns>
+        private static bool FormCheck(@Model.entityName data)
+        {
+            string verrmsg = Validate.CheckEntity<@Model.entityName>(data);
+            if (verrmsg != null)
+            {
+                data.ErrorMsg = verrmsg;
+                return false;
+            }
+            return true;
+        }
+    }
+}

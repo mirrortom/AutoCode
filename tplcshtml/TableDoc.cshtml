@@ -1,0 +1,45 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+  <title>@Model.tableName -数据表文档</title>
+  <style>
+    .container {
+      width: 100%;
+      max-width: 1200px;
+    }
+
+    table {
+      width: 100%;
+      text-align: left;
+      border: 1px solid #eee;
+      border-collapse: collapse;
+      color: #343434;
+    }
+
+    td,th {
+      padding: 4px;
+      border: 1px solid #eee;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h3>表名: @Model.tableName</h3>
+    <table>
+      <tr><th style="width:20px">主键</th><th style="width:20px">自增</th><th>列名</th><th>类型</th><th>长度</th><th>可空</th><th>说明</th></tr>
+      @foreach (Dictionary<string, string> item in Model.columns)
+      {
+        <tr>
+          <td>@item["ispk"]</td>
+          <td>@item["increment"]</td>
+          <td>@item["name"]</td>
+          <td>@item["dbtype"]</td>
+          <td>@item["maxlen"]</td>
+          <td>@item["benull"]</td>
+          <td>@item["info"]</td>
+        </tr>
+      }
+    </table>
+  </div>
+</body>
+</html>

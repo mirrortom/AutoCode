@@ -1,0 +1,92 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using @Model.nameSpace@(".BLL");
+using @Model.nameSpace@(".Entity");
+
+namespace @Model.nameSpace
+{
+    public class @Model.className : ApiBase
+    {
+        [HTTPPOST]
+        public void List()
+        {
+            try
+            {
+                var para = this.ParaForm<@Model.entityName>();
+                List<@Model.entityName> data = @(Model.bllName).List(para);
+                if (data.Count == 0)
+                {
+                    this.Json(new { errmsg = para.ErrorMsg, errcode = para.ErrorCode });
+                    return;
+                }
+                // 返回字段按需设定
+                var redata = data.Select(o => new
+                {
+@Model.fieldList
+                });
+                this.Json(new { list = redata, errcode = 200 });
+            }
+            catch (Exception)
+            {
+                this.Json(new { errcode = 500 });
+            }
+        }
+
+        [HTTPPOST]
+        public void Item()
+        {
+            try
+            {
+                var para = this.ParaForm<@Model.entityName>();
+                @Model.entityName data = @(Model.bllName).GetById(para);
+                if(data == null)
+                {
+                    this.Json(new { errmsg = para.ErrorMsg, errcode = para.ErrorCode });
+                    return;
+                }
+                // 返回字段按需设定
+                var redata = new
+                {
+@Model.fieldItem
+                };
+                this.Json(new { item = redata, errcode = 200 });
+            }
+            catch (Exception)
+            {
+                this.Json(new { errcode = 500 });
+            }
+        }
+
+        [HTTPPOST]
+        public void Add()
+        {
+            try
+            {
+                var para = this.ParaForm<@Model.entityName>();
+                @(Model.bllName).Add(para);
+                this.Json(new { errmsg = para.ErrorMsg, errcode = para.ErrorCode });
+            }
+            catch (Exception)
+            {
+                this.Json(new { errcode = 500 });
+            }
+        }
+
+        [HTTPPOST]
+        public void UpdateItemById()
+        {
+            try
+            {
+                var para = this.ParaForm<@Model.entityName>();
+                @(Model.bllName).UpdateById(para);
+                this.Json(new { errmsg = para.ErrorMsg, errcode = para.ErrorCode });
+            }
+            catch (Exception)
+            {
+                this.Json(new { errcode = 500 });
+            }
+        }
+    }
+}

@@ -1,0 +1,180 @@
+﻿@{
+  string divEditId = Model.tableName + "editForm";
+  string pkId = Model.tableName + "Id";
+  string submitBtnId = "add" + Model.tableName + "Btn";
+}
+<div class="page" id="@divEditId">
+  <input type="hidden" name="Id" value="" id="@pkId" />
+  <input type="hidden" name="ItemCode" value="" />
+  <p class="article-title info">新增</p>
+  @foreach (Dictionary<string, string> item in Model.columns)
+  {
+    <label class="input-label">@item["fieldTitle"]</label>
+    <input class="input-text" name="@item["fieldName"]" type="text" value="" placeholder="请输入 @item["fieldTitle"]" vtype="notnull" verrmsg="必填项" maxlength="@item["maxlen"]">
+  }
+  <hr class="line" />
+  <p class="text-success" id="editsubmitinfo"></p>
+  <div class="grids-3">
+    <a class="btn lg success" id="@submitBtnId">提交</a>
+    <i></i>
+    <a class="btn lg" id="resetFormBtn">清空(重置)</a>
+  </div>
+  <p class="text-danger text-lg mg-tb-10" id="errinfobox"></p>
+</div>
+<script>
+  ((win) => {
+    // help
+    let post = win.ns.post;
+    let get = win.ns.get;
+    let cfg = win.ns.cfg;
+    let page = win.ns.page;
+    let token = win.ns.token;
+    let router = win.ns.router;
+
+    //===========
+    // page init
+    //===========
+    // 去掉上次的提示语
+    $('#errinfobox').html('');
+    // 下拉框数据
+
+    // 绑定提交按钮
+    $('#@submitBtnId').click(thisBtn => {
+      add(thisBtn);
+    });
+    // 绑定重置
+    $('#resetFormBtn').click(thisBtn => {
+      resetForm();
+    });
+    // list页面跳过来编辑,使用数据填充表单
+    if (router.para && router.para.op == 'edit' && router.para.@pkId) {
+      $('#@pkId').val(router.para.@pkId);
+      // 编辑时请求数据,如果出错,尝试20次
+      initEditData();
+      router.para = null;
+    }
+    //===========
+    // function
+    //===========
+    /**
+     * 由list页面跳过来编辑时,需要请求数据填充表单.
+     * @@@@param {number} maxCount 最多请求次数
+     */
+    function initEditData(maxCount = 20) {
+      return;
+      // 要等待下拉框数据填充后,才请求
+      if (!$('#selectid1 option').length) {
+        if (maxCount <= 0) return;
+        setTimeout(() => { initEditData(maxCount - 1) }, 500);
+        return;
+      }
+      post(cfg.ApiEditItem, { id: $('#@pkId').val() })
+        .then(data => {
+          if (data.errcode == 200) {
+            let item = data.item;
+            // 填充表单
+            $('#@divEditId input[name]').each(o => {
+              o.value = item[o.name];
+            })
+            // 选中选项
+            $('#selectid1 option[value="' + item.ExcOrg + '"]')[0].selected = 'selected';
+            // 提示更新状态
+            $('#editsubmitinfo').text('🖍 更新: ');
+          } else if (data.errmsg) {
+            $('#errinfobox').html(data.errmsg);
+          } else
+            throw new Error(data);
+        })
+        .catch(err => {
+          $('#errinfobox').html(err.message);
+        });
+    }
+    /**
+     * 下拉框填充数据
+     * @@@@param {string} selectId select元素Id
+     * @@@@param {number} dataCategory 下拉框数据分组类型
+     */
+    function createOptions(selectId, dataCategory) {
+      return;
+      if ($('#' + selectId).find('option').length) {
+        return;
+      }
+      post(cfg.ApiSelectUrl, { category: dataCategory })
+        .then(data => {
+          if (data.errcode == 200) {
+            let ops = '<option value="">请选择...</option>';
+            for (var i = 0, len = data.list.length; i < len; i++) {
+              let item = data.list[i];
+              if (item.Enabled == 0)
+                continue;
+              let op = `<option value="${item.Code}" title="${item.Comment}">${item.Title}</option>`;
+              ops += op;
+            }
+            $('#' + selectId).html(ops);
+          } else if (data.errmsg) {
+            $('#errinfobox').html(data.errmsg);
+          } else
+            throw new Error(data);
+        })
+        .catch(err => {
+          $('#errinfobox').html(err.message);
+        });
+    }
+
+    /**
+     * 添加按钮
+     * @@@@param thisobj 按钮对象
+     */
+    function add(thisobj) {
+      return;
+      // 验证
+      // valdate
+      let inputs = $('#@divEditId').find('input[name],select[name]');
+      for (var i = 0, len = inputs.length; i < len; i++) {
+        if (!$.formCheck(inputs[i]))
+          return;
+      }
+      if ($ui.isBtnLoading(thisobj)) {
+        return;
+      }
+      // 发包
+      let para = $.formJson($('#@divEditId')[0]);
+      post(cfg.AddUrl, para)
+        .then(data => {
+          if (data.errcode == 200) {
+            $('#errinfobox').html('服务器返回成功!');
+            // 成功后重置表单
+            resetForm();
+
+          } else if (data.errmsg) {
+            $('#errinfobox').html(data.errmsg);
+          } else
+            throw new Error(data);
+          $ui.clsBtnLoading(thisobj, 500);
+        })
+        .catch(err => {
+          $('#errinfobox').html(err.message);
+          $ui.clsBtnLoading(thisobj, 500);
+        });
+    }
+
+    /**
+     * 重置表单数据
+     */
+    function resetForm() {
+      let today = $.datefmt(new Date(), 'yyyy/MM/dd');
+      // 字段重置
+      let def = {
+        @foreach (Dictionary<string, string> item in Model.columns)
+        {
+            @("        "+item["fieldName"]) @Raw(" :" + "'',\r\n")
+        }
+      };
+      // 选项重置
+      $('#@divEditId select[name]').each(item => {
+        item.selectedIndex = 0;
+      })
+      $('#editsubmitinfo').text('新增: ');
+    }
+  })(window);
+</script>
