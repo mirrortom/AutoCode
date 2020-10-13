@@ -178,7 +178,7 @@ namespace AutoCode
                 fieldList = fields_list,
                 fieldItem = fields_item
             };
-            BuildAndOutPutTemp(apiVersion == "api" ? apiTemp : apiCoreTemp, viewdata, $"{outFileDir}/{tableName}Api.cs");
+            BuildAndOutPutTemp(apiVersion == "api" ? apiTemp : apiCoreTemp, viewdata, $"{outFileDir}/{apiTypeName}.cs");
         }
 
         private static void CreateBll()
@@ -191,7 +191,7 @@ namespace AutoCode
                 entityName = entityTypeName,
                 dalName = dalTypeName
             };
-            BuildAndOutPutTemp(bllTemp, viewdata, $"{outFileDir}/{tableName}Bll.cs");
+            BuildAndOutPutTemp(bllTemp, viewdata, $"{outFileDir}/{bllTypeName}.cs");
         }
 
         private static void CreateEntity()
@@ -219,7 +219,7 @@ namespace AutoCode
                 className = entityTypeName,
                 columns = columns
             };
-            BuildAndOutPutTemp(entityTemp, viewdata, $"{outFileDir}/{tableName}M.cs");
+            BuildAndOutPutTemp(entityTemp, viewdata, $"{outFileDir}/{entityTypeName}.cs");
         }
 
 
@@ -234,7 +234,7 @@ namespace AutoCode
                 entityName = entityTypeName,
                 queryFields = string.Join(",", columns.Select(o => o["name"]))
             };
-            BuildAndOutPutTemp(dalTemp, viewdata, $"{outFileDir}/{tableName}Dal.cs");
+            BuildAndOutPutTemp(dalTemp, viewdata, $"{outFileDir}/{dalTypeName}.cs");
         }
 
         /// <summary>
