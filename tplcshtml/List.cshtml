@@ -1,9 +1,11 @@
 ﻿@{
-  string divListId = Model.tableName + "list";
+  string divListId = Model.tableName + "List";
+  string apiListUrlKey = "Api" + Model.TableName + "List";
 }
 <div class="page">
   <div class="mg-tb-20">
     <p class="article-title warning">搜索 <a id="clearSearchBtn" class="btn sm gray mg-l-10" searchFlag="0">清除搜索</a></p>
+    <div id="msginfobox"></div>
   </div>
   <div id="@divListId"></div>
   <hr class="line" />
@@ -16,7 +18,7 @@
     let get = win.ns.get;
     let cfg = win.ns.cfg;
     let router = win.ns.router;
-
+    let msg = win.msgshow('#msginfobox');
     //===========
     // page init
     //===========
@@ -29,25 +31,22 @@
 
     // table data
     function list() {
-      post(cfg.ApiAssetList, {})
+      post(cfg.@apiListUrlKey, {})
         .then(data => {
-          if (data.errcode == 200) {
+          if (data.errcode == @AutoCode.ErrCode.Success) {
             createTable(data.list);
             createSearch(data.list);
             refreshTableBySearchBtn();
-          } else if (data.errmsg) {
-            $('#@divListId').html(`<p class="text-warning">${data.errmsg}</p>`);
+          } else if (data.errcode == @AutoCode.ErrCode.SrvExp) {
+            msg.err(data.errmsg || '@AutoCode.AlertMsg.服务器错误.ToString()');
           } else
-            throw new Error(data);
+            msg.info(data.errmsg || '@AutoCode.AlertMsg.没有数据.ToString()');
         })
         .catch(err => {
-          $('#@divListId').html(`<p class="text-danger">${err.message}</p>`);
+          msg.err(err.message);
         });
     }
     function createTable(data) {
-      let span = (txt, cls, isBlock = true) => {
-        return `<span class="${cls || ''} ${isBlock == true ? "d-block" : ""}">${txt}</span>`;
-      };
       // tab header
       let th = '@Raw(Model.tableDataHeads)';
       // rows

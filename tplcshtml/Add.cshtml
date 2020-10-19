@@ -1,25 +1,33 @@
 ﻿@{
-  string divEditId = Model.tableName + "editForm";
+  string divEditId = Model.tableName + "EditForm";
   string pkId = Model.tableName + "Id";
-  string submitBtnId = "add" + Model.tableName + "Btn";
+  string submitBtnId = "add" + Model.TableName + "Btn";
+  string apiAddUrlKey = "Api" + Model.TableName + "Add";
+  string apiItemUrlKey = "Api" + Model.TableName + "Item";
 }
 <div class="page" id="@divEditId">
   <input type="hidden" name="Id" value="" id="@pkId" />
   <input type="hidden" name="ItemCode" value="" />
-  <p class="article-title info">新增</p>
+  <p class="article-title" id="editFormTitle"></p>
   @foreach (Dictionary<string, string> item in Model.columns)
   {
     <label class="input-label">@item["fieldTitle"]</label>
-    <input class="input-text" name="@item["fieldName"]" type="text" value="" placeholder="请输入 @item["fieldTitle"]" vtype="notnull" verrmsg="必填项" maxlength="@item["maxlen"]">
+    if (item["dbtype"].Contains("date"))
+    {
+      <input class="input-text" name="" type="text" value="" onclick="MyDatePick()" placeholder="请输入 @item["fieldTitle"]" vtype="notnull|date" verrmsg="必填项|日期无效">
+    }
+    else
+    {
+      <input class="input-text" name="@item["fieldName"]" type="text" value="" placeholder="请输入 @item["fieldTitle"]" vtype="notnull" verrmsg="必填项" maxlength="@item["maxlen"]">
+    }
   }
   <hr class="line" />
-  <p class="text-success" id="editsubmitinfo"></p>
   <div class="grids-3">
     <a class="btn lg success" id="@submitBtnId">提交</a>
     <i></i>
     <a class="btn lg" id="resetFormBtn">清空(重置)</a>
   </div>
-  <p class="text-danger text-lg mg-tb-10" id="errinfobox"></p>
+  <div class="mg-tb-10" id="msginfobox"></div>
 </div>
 <script>
   ((win) => {
@@ -30,12 +38,14 @@
     let page = win.ns.page;
     let token = win.ns.token;
     let router = win.ns.router;
+    let msg = win.msgshow('#msginfobox');
 
     //===========
     // page init
     //===========
     // 去掉上次的提示语
-    $('#errinfobox').html('');
+    msg.clear();
+    chgTitle();
     // 下拉框数据
 
     // 绑定提交按钮
@@ -58,7 +68,7 @@
     //===========
     /**
      * 由list页面跳过来编辑时,需要请求数据填充表单.
-     * @@@@param {number} maxCount 最多请求次数
+     * @@param {number} maxCount 最多请求次数
      */
     function initEditData(maxCount = 20) {
       return;
@@ -68,9 +78,9 @@
         setTimeout(() => { initEditData(maxCount - 1) }, 500);
         return;
       }
-      post(cfg.ApiEditItem, { id: $('#@pkId').val() })
+      post(cfg.@apiItemUrlKey, { id: $('#@pkId').val() })
         .then(data => {
-          if (data.errcode == 200) {
+          if (data.errcode == @AutoCode.ErrCode.Success) {
             let item = data.item;
             // 填充表单
             $('#@divEditId input[name]').each(o => {
@@ -79,20 +89,20 @@
             // 选中选项
             $('#selectid1 option[value="' + item.ExcOrg + '"]')[0].selected = 'selected';
             // 提示更新状态
-            $('#editsubmitinfo').text('🖍 更新: ');
-          } else if (data.errmsg) {
-            $('#errinfobox').html(data.errmsg);
+            chgTitle(1);
+          } else if (data.errcode ==@AutoCode.ErrCode.SrvExp) {
+            msg.err(data.errmsg || '@AutoCode.AlertMsg.服务器错误.ToString()');
           } else
-            throw new Error(data);
+            msg.info(data.errmsg);
         })
         .catch(err => {
-          $('#errinfobox').html(err.message);
+          msg.err(err.message);
         });
     }
     /**
      * 下拉框填充数据
-     * @@@@param {string} selectId select元素Id
-     * @@@@param {number} dataCategory 下拉框数据分组类型
+     * @@param {string} selectId select元素Id
+     * @@param {number} dataCategory 下拉框数据分组类型
      */
     function createOptions(selectId, dataCategory) {
       return;
@@ -101,7 +111,7 @@
       }
       post(cfg.ApiSelectUrl, { category: dataCategory })
         .then(data => {
-          if (data.errcode == 200) {
+          if (data.errcode == @AutoCode.ErrCode.Success) {
             let ops = '<option value="">请选择...</option>';
             for (var i = 0, len = data.list.length; i < len; i++) {
               let item = data.list[i];
@@ -111,19 +121,19 @@
               ops += op;
             }
             $('#' + selectId).html(ops);
-          } else if (data.errmsg) {
-            $('#errinfobox').html(data.errmsg);
+          } else if (data.errcode == @AutoCode.ErrCode.SrvExp) {
+            msg.err(data.errmsg || '@AutoCode.AlertMsg.服务器错误.ToString()');
           } else
-            throw new Error(data);
+            msg.info(data.errmsg);
         })
         .catch(err => {
-          $('#errinfobox').html(err.message);
+          msg.err(err.message);
         });
     }
 
     /**
      * 添加按钮
-     * @@@@param thisobj 按钮对象
+     * @@param thisobj 按钮对象
      */
     function add(thisobj) {
       return;
@@ -139,21 +149,21 @@
       }
       // 发包
       let para = $.formJson($('#@divEditId')[0]);
-      post(cfg.AddUrl, para)
+      post(cfg.@apiAddUrlKey, para)
         .then(data => {
-          if (data.errcode == 200) {
-            $('#errinfobox').html('服务器返回成功!');
+          if (data.errcode == @AutoCode.ErrCode.Success) {
+            msg.ok('服务器返回成功!');
             // 成功后重置表单
             resetForm();
 
-          } else if (data.errmsg) {
-            $('#errinfobox').html(data.errmsg);
+          } else if (data.errcode == @AutoCode.ErrCode.SrvExp) {
+            msg.err(data.errmsg || '@AutoCode.AlertMsg.服务器错误.ToString()');
           } else
-            throw new Error(data);
+            msg.info(data.errmsg);
           $ui.clsBtnLoading(thisobj, 500);
         })
         .catch(err => {
-          $('#errinfobox').html(err.message);
+          msg.err(err.message);
           $ui.clsBtnLoading(thisobj, 500);
         });
     }
@@ -174,7 +184,19 @@
       $('#@divEditId select[name]').each(item => {
         item.selectedIndex = 0;
       })
-      $('#editsubmitinfo').text('新增: ');
+      chgTitle();
+    }
+
+    /**
+     * 新增/修改 标题切换 1=修改,其它=新增
+     * @@param {number} type
+     */
+    function chgTitle(type) {
+        if (type == 1) {
+            $('#editFormTitle').text('🖍 更新').addClass('text-danger');
+        } else {
+            $('#editFormTitle').text('\u271A 新增').removeClass('text-danger');
+        }
     }
   })(window);
 </script>

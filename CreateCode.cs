@@ -25,7 +25,7 @@ namespace AutoCode
         private const string apiCoreTemp = "tplcshtml/ApiCore.cshtml";
         private const string tableDocTemp = "tplcshtml/TableDoc.cshtml";
         private const string listTemp = "tplcshtml/List.cshtml";
-        private const string editTemp = "tplcshtml/Edit.cshtml";
+        private const string addTemp = "tplcshtml/Add.cshtml";
         // 输出根目录
         private static string outRootDir = "CreateCode";
         // 根目录下以表名建立一个目录
@@ -34,6 +34,10 @@ namespace AutoCode
 
         #region 表名,命名空间,实体类名,dal,bll,api层类名
         private static string tableName;
+        /// <summary>
+        /// 首字母大写的表名
+        /// </summary>
+        private static string TableName;
         private static string nameSpace;
         private static string entityTypeName;
         private static string dalTypeName;
@@ -92,11 +96,11 @@ namespace AutoCode
             tableName = tabName;
             // 命名空间和类名首字母大写
             nameSpace = nSpace.Substring(0,1).ToUpper()+nSpace.Substring(1);
-            string tableNameUpp = tableName.Substring(0, 1).ToUpper() + tableName.Substring(1);
-            entityTypeName = tableNameUpp + 'M';
-            dalTypeName = tableNameUpp + "Dal";
-            bllTypeName = tableNameUpp + "Bll";
-            apiTypeName = tableNameUpp + "Api";
+            TableName = tableName.Substring(0, 1).ToUpper() + tableName.Substring(1);
+            entityTypeName = TableName + 'M';
+            dalTypeName = TableName + "Dal";
+            bllTypeName = TableName + "Bll";
+            apiTypeName = TableName + "Api";
 
             // outputdir 输出根目录
             if (!string.IsNullOrWhiteSpace(outDir))
@@ -121,10 +125,11 @@ namespace AutoCode
             var viewdata = new
             {
                 tableName = tableName,
+                TableName,
                 tableDataHeads = heads.ToString(),
                 tableDataCols = cols.ToString(),
             };
-            BuildAndOutPutTemp(listTemp, viewdata, $"{outFileDir}/{tableName}list.cshtml");
+            BuildAndOutPutTemp(listTemp, viewdata, $"{outFileDir}/{tableName}list.html");
         }
 
         /// <summary>
@@ -135,9 +140,10 @@ namespace AutoCode
             var viewdata = new
             {
                 tableName = tableName,
+                TableName,
                 columns = columns
             };
-            BuildAndOutPutTemp(editTemp, viewdata, $"{outFileDir}/{tableName}edit.cshtml");
+            BuildAndOutPutTemp(addTemp, viewdata, $"{outFileDir}/{tableName}add.html");
         }
         /// <summary>
         /// 建立数据表文档. 一个HTML表格

@@ -23,7 +23,7 @@
     <None Update="tplcshtml\Dal.cshtml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="tplcshtml\Edit.cshtml">
+    <None Update="tplcshtml\Add.cshtml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="tplcshtml\Entity.cshtml">

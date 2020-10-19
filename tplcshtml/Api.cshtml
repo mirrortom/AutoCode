@@ -18,7 +18,7 @@ namespace @Model.nameSpace
                 List<@Model.entityName> data = @(Model.bllName).List(para);
                 if (data.Count == 0)
                 {
-                    this.Json(new { errmsg = para.ErrorMsg, errcode = para.ErrorCode });
+                    this.Json(new { errmsg = para.ErrorMsg , errcode = ErrCode.NoData });
                     return;
                 }
                 // 返回字段按需设定
@@ -26,11 +26,11 @@ namespace @Model.nameSpace
                 {
 @Model.fieldList
                 });
-                this.Json(new { list = redata, errcode = 200 });
+                this.Json(new { list = redata, errcode = ErrCode.Success });
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                this.Json(new { errcode = 500 });
+                this.Json(new { errmsg = e.Message, errcode = ErrCode.SrvExp });
             }
         }
 
@@ -43,7 +43,7 @@ namespace @Model.nameSpace
                 @Model.entityName data = @(Model.bllName).GetById(para);
                 if(data == null)
                 {
-                    this.Json(new { errmsg = para.ErrorMsg, errcode = para.ErrorCode });
+                    this.Json(new { errmsg = para.ErrorMsg , errcode = ErrCode.NoData });
                     return;
                 }
                 // 返回字段按需设定
@@ -51,11 +51,11 @@ namespace @Model.nameSpace
                 {
 @Model.fieldItem
                 };
-                this.Json(new { item = redata, errcode = 200 });
+                this.Json(new { item = redata, errcode = ErrCode.Success });
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                this.Json(new { errcode = 500 });
+                this.Json(new { errmsg = e.Message, errcode = ErrCode.SrvExp });
             }
         }
 
@@ -68,9 +68,9 @@ namespace @Model.nameSpace
                 @(Model.bllName).Add(para);
                 this.Json(new { errmsg = para.ErrorMsg, errcode = para.ErrorCode });
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                this.Json(new { errcode = 500 });
+                this.Json(new { errmsg = e.Message, errcode = ErrCode.SrvExp });
             }
         }
 
@@ -83,9 +83,9 @@ namespace @Model.nameSpace
                 @(Model.bllName).UpdateById(para);
                 this.Json(new { errmsg = para.ErrorMsg, errcode = para.ErrorCode });
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                this.Json(new { errcode = 500 });
+                this.Json(new { errmsg = e.Message, errcode = ErrCode.SrvExp });
             }
         }
     }

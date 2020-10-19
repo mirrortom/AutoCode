@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using @Model.nameSpace@(".DAL");
 using @Model.nameSpace@(".Entity");
+using @Model.nameSpace@(".Help");
 
 @{ 
     string entityListType = Model.entityName + "[]";
@@ -59,10 +60,10 @@ namespace @Model.nameSpace@(".BLL")
         {
             if (FormCheck(para) == false)
                return;
-            para.CreateTime = DateTimeOffset.Now;
+            //para.CTime = DateTimeOffset.Now;
             int isok = @(Model.dalName).Add(para);
             if (isok == 1) {
-                para.ErrorCode = 200;
+                para.ErrorCode = ErrCode.Success;
                 return;
             }
             para.ErrorMsg = "添加失败,数据库错误!";
@@ -77,10 +78,10 @@ namespace @Model.nameSpace@(".BLL")
         {
             if (FormCheck(para) == false)
               return;
-            para.UpdateTime = DateTimeOffset.Now;
+            //para.UTtime = DateTimeOffset.Now;
             int isok = @(Model.dalName).UpdateById(para);
             if (isok == 1) {
-                para.ErrorCode = 200;
+                para.ErrorCode = ErrCode.Success;
                 return;
             }
             para.ErrorMsg = "更新失败,数据库错误!";
