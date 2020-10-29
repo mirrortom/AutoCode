@@ -26,6 +26,7 @@ namespace AutoCode
         private const string tableDocTemp = "tplcshtml/TableDoc.cshtml";
         private const string listTemp = "tplcshtml/List.cshtml";
         private const string addTemp = "tplcshtml/Add.cshtml";
+        private const string addGridLayoutTemp = "tplcshtml/Add_gridlayout.cshtml";
         // 输出根目录
         private static string outRootDir = "CreateCode";
         // 根目录下以表名建立一个目录
@@ -58,25 +59,27 @@ namespace AutoCode
         /// <param name="connStr">DB连接串</param>
         /// <param name="apiVersion">可选值"apicore"(.net core版本,默认是framework版本)</param>
         /// <param name="outDir">输出目录</param>
-        public static void Run(string tabName, string nSpace, string connStr = null, string apiVersion = "api", string outDir = "CreateCode")
+        public static void Run(Cfg cfg)
         {
+            CheckCfg(cfg);
             // 
-            Init(tabName, nSpace, outDir);
+            Init(cfg.TableName, cfg.NS, cfg.OutPutDir);
 
             // table info 取得数据表的列字段信息
-            SQLServer db = connStr == null ? new SQLServer() : new SQLServer(connStr);
+            SQLServer db = new SQLServer(cfg.ConnStr);
             GetColumns(db);
             //
             FieldNameToCsName();
             FieldTitle();
+            FieldValidMaxLen();
 
             // create codes 生成各代码文件
             CreateDal();
             CreateEntity();
             CreateBll();
-            CreateApi(apiVersion);
+            CreateApi(cfg.ApiVersion);
             CreateList();
-            CreateEdit();
+            CreateAdd(cfg.FormLayout);
             CreateTabDoc();
 
             // 打开目录 (这个方法在windows平台有效)
@@ -89,13 +92,33 @@ namespace AutoCode
             //Process.Start("C:/WINDOWS/system32/explorer.exe", outPutDir);
         }
 
+        /// <summary>
+        /// 检查配置,出错丢异常
+        /// </summary>
+        /// <param name="cfg"></param>
+        private static void CheckCfg(Cfg cfg)
+        {
+            if (cfg == null) throw new Exception("配置无效!");
+            if (string.IsNullOrWhiteSpace(cfg.ConnStr))
+                throw new Exception("未填写数据库连接字符!");
+            if (string.IsNullOrWhiteSpace(cfg.TableName))
+                throw new Exception("未填写表名!");
+            if (string.IsNullOrWhiteSpace(cfg.NS))
+                throw new Exception("未填写命名空间!");
+            if (!(cfg.ApiVersion == 1 || cfg.ApiVersion == 2))
+                throw new Exception("api版本选项无效");
+            if (string.IsNullOrWhiteSpace(cfg.OutPutDir))
+                throw new Exception("未填写输出目录!");
+            if (!(cfg.FormLayout == 1 || cfg.FormLayout == 2))
+                throw new Exception("add页面表单布局选项无效");
+        }
 
         private static void Init(string tabName, string nSpace, string outDir)
         {
             // data init
             tableName = tabName;
             // 命名空间和类名首字母大写
-            nameSpace = nSpace.Substring(0,1).ToUpper()+nSpace.Substring(1);
+            nameSpace = nSpace.Substring(0, 1).ToUpper() + nSpace.Substring(1);
             TableName = tableName.Substring(0, 1).ToUpper() + tableName.Substring(1);
             entityTypeName = TableName + 'M';
             dalTypeName = TableName + "Dal";
@@ -120,7 +143,7 @@ namespace AutoCode
             foreach (var item in columns)
             {
                 heads.Append($"<th>{item["fieldTitle"]}</th>");
-                cols.Append($"<td>item.{item["fieldName"]}</td>");
+                cols.Append($"<td>${{item.{item["fieldName"]}}}</td>");
             }
             var viewdata = new
             {
@@ -133,9 +156,9 @@ namespace AutoCode
         }
 
         /// <summary>
-        /// edit编辑页
+        /// add/edit编辑页
         /// </summary>
-        private static void CreateEdit()
+        private static void CreateAdd(int formLayout)
         {
             var viewdata = new
             {
@@ -143,7 +166,7 @@ namespace AutoCode
                 TableName,
                 columns = columns
             };
-            BuildAndOutPutTemp(addTemp, viewdata, $"{outFileDir}/{tableName}add.html");
+            BuildAndOutPutTemp(formLayout == 1 ? addTemp : addGridLayoutTemp, viewdata, $"{outFileDir}/{tableName}add.html");
         }
         /// <summary>
         /// 建立数据表文档. 一个HTML表格
@@ -157,7 +180,7 @@ namespace AutoCode
             };
             BuildAndOutPutTemp(tableDocTemp, viewdata, $"{outFileDir}/{tableName}.doc.html");
         }
-        private static void CreateApi(string apiVersion)
+        private static void CreateApi(int apiVersion)
         {
             // json字段,按需返回. data.Select(o=>new{以下拼接字段内容,默认所有列名})
             StringBuilder sb = new StringBuilder();
@@ -184,7 +207,7 @@ namespace AutoCode
                 fieldList = fields_list,
                 fieldItem = fields_item
             };
-            BuildAndOutPutTemp(apiVersion == "api" ? apiTemp : apiCoreTemp, viewdata, $"{outFileDir}/{apiTypeName}.cs");
+            BuildAndOutPutTemp(apiVersion == 1 ? apiCoreTemp : apiTemp, viewdata, $"{outFileDir}/{apiTypeName}.cs");
         }
 
         private static void CreateBll()
@@ -205,13 +228,12 @@ namespace AutoCode
             foreach (var item in columns)
             {
                 string dbtype = item["dbtype"];
-                int maxlen = int.Parse(item["maxlen"]);
                 // 属性/成员字段的注释
                 string comment = item["info"];
                 if (dbtype.Contains("char"))
                 {
-                    // 字符串类型的属性,注释加上长度,用于表单验证参考.如果为是n开头的char.长度减半
-                    comment = $"{comment} maxlen={(dbtype.Substring(0, 1) == "n" ? (maxlen / 2).ToString() : maxlen.ToString())}";
+                    // 字符串类型的属性,注释加上长度,用于表单验证参考.如果是n开头的char.长度减半
+                    comment = $"{comment} maxlen={item["validMaxLen"]}";
                 }
                 item.Add("comment", comment);
                 // 数据库字段类型转C#类型
@@ -297,6 +319,7 @@ WHERE c.object_id =
                 }
             }
         }
+
         /// <summary>
         /// 数据表字段类型转换为C#类型
         /// db field type transfer c# type
@@ -318,6 +341,7 @@ WHERE c.object_id =
                 return "decimal";
             return "string";
         }
+
         /// <summary>
         /// 数据表字段名字,转换为c#类名字.首字母大写
         /// </summary>
@@ -329,6 +353,7 @@ WHERE c.object_id =
                 item.Add("fieldName", item["name"].Substring(0, 1).ToUpper() + item["name"].Substring(1));
             }
         }
+
         /// <summary>
         /// 数据表字段的标题.取注释第一个词(空格分开的),没有就是字段名字
         /// </summary>
@@ -342,6 +367,27 @@ WHERE c.object_id =
                     title = item["info"].Split(' ')[0];
                 }
                 item.Add("fieldTitle", title);
+            }
+        }
+
+        /// <summary>
+        /// 数据表字段的长度,用于页面验证参考.如果是char类型的,并且是n开头的char类型,长度要减半.
+        /// </summary>
+        private static void FieldValidMaxLen()
+        {
+            foreach (var item in columns)
+            {
+                string dbtype = item["dbtype"];
+                int maxlen = int.Parse(item["maxlen"]);
+                item.Add("validMaxLen", item["maxlen"]);
+                if (dbtype.Contains("char"))
+                {
+                    // 字符串类型的属性,注释加上长度,用于表单验证参考.如果是n开头的char.长度减半
+                    if (dbtype.Substring(0, 1) == "n")
+                    {
+                        item["validMaxLen"] = (maxlen / 2).ToString();
+                    }
+                }
             }
         }
     }

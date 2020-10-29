@@ -12,20 +12,22 @@
   @foreach (Dictionary<string, string> item in Model.columns)
   {
     string dbtype = item["dbtype"];
-    <label class="input-label">@item["fieldTitle"]</label>
-    if (dbtype.Contains("date"))
-    {
-      <input class="input-text" name="@item["fieldName"]" vtype="notnull|date" verrmsg="必填项|日期无效" type="text" value="" onclick="MyDatePick()" placeholder="请输入 @item["fieldTitle"]" >
-    }
-    else if (dbtype.Contains("char"))
-    {
-      string maxLen = item["validMaxLen"];
-      <input class="input-text" name="@item["fieldName"]" vtype="notnull|maxlen" verrmsg="必填项|不超过 @maxLen 个字符" maxlength="@maxLen" type="text" value="" placeholder="请输入 @item["fieldTitle"]">
-    }
-    else
-    {
-      <input class="input-text" name="@item["fieldName"]" vtype="notnull" verrmsg="必填项" type="text" value="" placeholder="请输入 @item["fieldTitle"]">
-    }
+    <div class="grids">
+      <label class="input-label grid-2 grid-lg-1">@item["fieldTitle"]</label>
+      @if (dbtype.Contains("date"))
+      {
+        <input class="input-text grid" name="@item["fieldName"]" vtype="notnull|date" verrmsg="必填项|日期无效" type="text" value="" onclick="MyDatePick()" placeholder="请输入 @item["fieldTitle"]">
+      }
+      else if (dbtype.Contains("char"))
+      {
+        string maxLen = item["validMaxLen"];
+        <input class="input-text grid" name="@item["fieldName"]" vtype="notnull|maxlen" verrmsg="必填项|不超过 @maxLen 个字符" maxlength="@maxLen" type="text" value="" placeholder="请输入 @item["fieldTitle"]">
+      }
+      else
+      {
+        <input class="input-text grid" name="@item["fieldName"]" vtype="notnull" verrmsg="必填项" type="text" value="" placeholder="请输入 @item["fieldTitle"]">
+      }
+    </div>
   }
   <hr class="line" />
   <div class="grids-3">

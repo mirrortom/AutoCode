@@ -18,7 +18,7 @@
     let get = win.ns.get;
     let cfg = win.ns.cfg;
     let router = win.ns.router;
-    let msg = win.msgshow('#msginfobox');
+    let msg = win.msgshow('msginfobox');
     //===========
     // page init
     //===========
@@ -48,14 +48,19 @@
     }
     function createTable(data) {
       // tab header
-      let th = '@Raw(Model.tableDataHeads)';
+      let th = '@Raw(Model.tableDataHeads+"<th>操作</th>")';
       // rows
       let rows = '';
       for (var i = 0, len = data.length; i < len; i++) {
         let item = data[i];
-        let cols = '@Raw(Model.tableDataCols)';
+        let cols = `@Raw(Model.tableDataCols)`;
+        // btns
+        cols += '<td>';
+        cols += `<a class="btn update-btns" dataid="${item.Id}">更新</a> `;
+        cols += `<input class="onoff-check" id="${item.Id}" type="checkbox" ${item.Status == 1 ? "checked" : ""}/><label class="onoff-label" for="${item.Id}" ></label>`;
+        cols += '</td>';
         // 支持的搜索条件添加在tr元素上
-        rows += `<tr>${cols}</tr>`;
+        rows += `<tr @(Model.tableName+"Id")="${item.Id}">${cols}</tr>`;
       }
       let table = `<table class="table border-all hover">${th}${rows}</table>`;
       $('#@divListId').empty().html(table);
@@ -64,7 +69,17 @@
     }
     // 操作事件绑定
     function opBind() {
-
+      return;
+      // 更新
+      $('#@divListId .update-btns').click(item => {
+        // router.goto('/html/@(Model.tableName+"add.html")', { op: 'edit', @(Model.tableName+"Id"): $(item).prop('dataid') });
+      });
+      // on off事件
+      $('#@divListId .onoff-label').click(item => {
+        // 注意选中状态,这里获得的是点击前的状态.例如:如果是选中,点击后会变成没选中.所以应该上传没选中.
+        // let ischeck = $(item).prev()[0].checked;
+        // post(cfg.ApiKVOnOff, { table: '@Model.tableName', id: $(item).prop('for'), status: ischeck ? 2 : 1 });
+      });
     }
     // =====
     // 搜索

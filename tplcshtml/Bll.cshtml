@@ -20,7 +20,7 @@ namespace @Model.nameSpace@(".BLL")
         /// <returns></returns>
         public static List<@Model.entityName> List(@Model.entityName para)
         {
-            @entityListType data = null;
+            @entityListType data;
             if (para.IsPagePart == 0)
             {
                 data = @(Model.dalName).All(para);
@@ -32,7 +32,10 @@ namespace @Model.nameSpace@(".BLL")
                 data = @(Model.dalName).List(para);
             }
             if(data == null)
+            {
+                para.ErrorMsg = AlertMsg.数据库错误.ToString();
                 return new List<@Model.entityName>();
+            }
             for (int i = 0; i < data.Length; i++)
             {
                 data[i].RowNumber = para.IsPagePart == 0
@@ -60,7 +63,8 @@ namespace @Model.nameSpace@(".BLL")
         {
             if (FormCheck(para) == false)
                return;
-            //para.CTime = DateTimeOffset.Now;
+            //para.Ctime = DateTimeOffset.Now;
+            //para.Id = RandHelp.NewGuid();
             int isok = @(Model.dalName).Add(para);
             if (isok == 1) {
                 para.ErrorCode = ErrCode.Success;
@@ -78,7 +82,7 @@ namespace @Model.nameSpace@(".BLL")
         {
             if (FormCheck(para) == false)
               return;
-            //para.UTtime = DateTimeOffset.Now;
+            //para.Utime = DateTimeOffset.Now;
             int isok = @(Model.dalName).UpdateById(para);
             if (isok == 1) {
                 para.ErrorCode = ErrCode.Success;

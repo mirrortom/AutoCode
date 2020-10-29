@@ -6,11 +6,19 @@ namespace AutoCode
     {
         static void Main(string[] args)
         {
-            string connstr = @"server=(localdb)\.\mylocaldb;uid=sa;pwd=123456;Initial Catalog=mldco";
+            Cfg cfg = new Cfg()
+            {
+                ConnStr = @"server=(localdb)\.\mylocaldb;uid=sa;pwd=123456;Initial Catalog=mldco",
+                NS = "mld",
+                TableName = "orders",
+                ApiVersion = 1,
+                FormLayout = 2
+            };
             Console.WriteLine($"开始生成程序,wait...");
-            CreateCode.Run("dept", "mld", connstr, "apicore");
+            CreateCode.Run(cfg);
             Console.WriteLine("完成...");
             Console.ReadKey();
         }
+
     }
 }

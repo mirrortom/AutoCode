@@ -104,5 +104,20 @@ namespace @Model.nameSpace@(".DAL")
             SQLServer db = new SQLServer();
             return db.Update<@Model.entityName>(update, para);
         }
+
+        /// <summary>
+        /// 查询是否存在指定字段的值的记录
+        /// </summary>
+        /// <param name="fieldName"></param>
+        /// <param name="fieldVal"></param>
+        /// <returns></returns>
+        internal static bool ExistByField(string fieldName, string fieldVal)
+        {
+            string sql = $@@"SELECT COUNT(id) FROM @Model.tableName WHERE {fieldName}=@@fieldVal";
+            SQLServer db = new SQLServer();
+            object re = db.ExecuteScalar(sql, fieldVal, 1);
+            if (re == null) return false;
+            return long.Parse(re.ToString()) > 0;
+        }
     }
 }

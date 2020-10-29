@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
+
 using @Model.nameSpace@(".BLL");
 using @Model.nameSpace@(".Entity");
+using @Model.nameSpace@(".Help");
 
 namespace @Model.nameSpace
 {
@@ -22,10 +22,14 @@ namespace @Model.nameSpace
                 return;
             }
             // 返回字段按需设定
-            var redata = data.Select(o => new
+            var redata = AllFieldList(data);
+            // 按需字段列表
+            if (!string.IsNullOrWhiteSpace(para.Fields) && para.Fields.Split(',').Length > 0)
             {
-@Model.fieldList
-            });
+                var list = SerializeHelp.ObjectsToDicts(redata, para.Fields.Split(','));
+                await this.Json(new { list, errcode = ErrCode.Success });
+                return;
+            }
             await this.Json(new { list = redata, errcode = ErrCode.Success });
         }
 
@@ -44,6 +48,13 @@ namespace @Model.nameSpace
             {
 @Model.fieldItem
             };
+            // 按需字段列表
+            if (!string.IsNullOrWhiteSpace(para.Fields) && para.Fields.Split(',').Length > 0)
+            {
+                var list = SerializeHelp.ObjectToDict(redata, para.Fields.Split(','));
+                await this.Json(new { item = list, errcode = ErrCode.Success });
+                return;
+            }
             await this.Json(new { item = redata, errcode = ErrCode.Success });
         }
 
@@ -51,6 +62,14 @@ namespace @Model.nameSpace
         public async Task Add()
         {
             var para = this.ParaForm<@Model.entityName>();
+            // para.Cuser = para.Uuser = this.User.Id;
+            if (!string.IsNullOrWhiteSpace(para.Id))
+            {
+                // 更新
+                @(Model.bllName).UpdateById(para);
+                await this.Json(new { errmsg = para.ErrorMsg, errcode = para.ErrorCode });
+                return;
+            }
             @(Model.bllName).Add(para);
             await this.Json(new { errmsg = para.ErrorMsg, errcode = para.ErrorCode });
         }
@@ -61,6 +80,15 @@ namespace @Model.nameSpace
             var para = this.ParaForm<@Model.entityName>();
             @(Model.bllName).UpdateById(para);
             await this.Json(new { errmsg = para.ErrorMsg, errcode = para.ErrorCode });
+        }
+
+        private IEnumerable<object> AllFieldList(IEnumerable<@Model.entityName> data)
+        {
+            var redata = data.Select(o => new
+            {
+@Model.fieldList
+            });
+            return redata;
         }
     }
 }

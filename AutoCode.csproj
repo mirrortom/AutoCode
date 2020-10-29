@@ -11,6 +11,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="tplcshtml\Add_gridlayout.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="tplcshtml\Api.cshtml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
