@@ -22,8 +22,8 @@
     //===========
     // page init
     //===========
+    createSearch();
     list();
-    clearSearchBtn_click();
 
     //===========
     // function
@@ -31,16 +31,18 @@
 
     // table data
     function list() {
-      post(cfg.@apiListUrlKey, {})
+      let searchKeys = getSearchKeys();
+      post(cfg.@apiListUrlKey, searchKeys)
         .then(data => {
           if (data.errcode == @AutoCode.ErrCode.Success) {
+            msg.clear();
             createTable(data.list);
-            createSearch(data.list);
-            refreshTableBySearchBtn();
           } else if (data.errcode == @AutoCode.ErrCode.SrvExp) {
             msg.err(data.errmsg || '@AutoCode.AlertMsg.服务器错误.ToString()');
-          } else
+          } else {
+            $('@divListId').empty();
             msg.info(data.errmsg || '@AutoCode.AlertMsg.没有数据.ToString()');
+          }
         })
         .catch(err => {
           msg.err(err.message);
@@ -56,13 +58,13 @@
         let cols = `@Raw(Model.tableDataCols)`;
         // btns
         cols += '<td>';
-        cols += `<a class="btn update-btns" dataid="${item.Id}">更新</a> `;
-        cols += `<input class="onoff-check" id="${item.Id}" type="checkbox" ${item.Status == 1 ? "checked" : ""}/><label class="onoff-label" for="${item.Id}" ></label>`;
+        cols += `<a class="btn update-btns sm" dataid="${item.Id}">更新</a> `;
+        cols += `<input class="onoff-check sm" id="${item.Id}" type="checkbox" ${item.Status == 1 ? "checked" : ""}/><label class="onoff-label" for="${item.Id}" ></label>`;
         cols += '</td>';
-        // 支持的搜索条件添加在tr元素上
+        // 支持的搜索条件添加在tr元素上(当前端实现搜索时)
         rows += `<tr @(Model.tableName+"Id")="${item.Id}">${cols}</tr>`;
       }
-      let table = `<table class="table border-all hover">${th}${rows}</table>`;
+      let table = `<table class="table border-all"><tr>${th}</tr>${rows}</table>`;
       $('#@divListId').empty().html(table);
       //
       opBind();
@@ -81,20 +83,63 @@
         // post(cfg.ApiKVOnOff, { table: '@Model.tableName', id: $(item).prop('for'), status: ischeck ? 2 : 1 });
       });
     }
-    // =====
-    // 搜索
-    // =====
-    // 生成搜索条件,搜索是前端的实现.根据资产列表数据生成搜索条件.
-    // refresh=true 强制重新生成标题列表
-    // 要加新的搜索方式时,在此方法加.(具体参考已实现的搜索函数,注意:数据表格tr元素上添加匹配条件)
+    // ==========================================================================================
+    // == 搜索:添加步骤如下 ==
+    // 1.html添加,容器id命名按照约定,例如: [cuser]Search[Input] 分3段,字段名字,Search固定,搜索控件类型
+    // 2.在createSearch方法里加入条件,每个条件一个方法.例如: cuserSearchInputFun
+    // 2-1. 添加搜索条件实现的方法:cuserSearchInputFun,实现搜索条件生成,调用数据获取,设置搜索状态为1(已搜索状态)
+    // 3.在getSearchKeys里添加获取这个搜索条件值的代码
+    // 4.在resetSearch里添加重置这个搜索条件值的代码
+    // ==========================================================================================
+
+    // 生成搜索条件
+    // refresh=true 强制重新生成搜索条件
+    // 要加新的搜索方式时,在此方法加.
     function createSearch(data, refresh) {
       // 为了在切换页面时,保留上次的搜索条件和结果,判断是否搜索过.没有搜索过才生成
       if (searchFlag() == 1 && refresh != true) return;
-    }
 
-    // 根据搜索按钮状态,显示资产表格内容
-    function refreshTableBySearchBtn() {
-      // 没有一个搜索选中按钮(或者搜索区数据还没有生成),显示全部
+      // 支持的搜索选项在此添加,每个条件一个方法
+      // cuserSearchInputFun();
+      // deptSearchBtnsFun();
+
+      // 重置搜索按钮,事件绑定
+      $('#clearSearchBtn').click(() => {
+        resetSearch();
+        list();
+        searchFlag(0)
+      });
+    }
+    // 人员search
+    function cuserSearchInputFun() {
+      //inputValWatch($('#cuserSearchInput')[0], (val) => {
+      //  list();
+      //  searchFlag(1);
+      //})
+    }
+    // 部门search
+    function deptSearchBtnsFun() {
+      //common.createDeptSearchBtn('deptSearchBtns', () => {
+      //  list();
+      //  searchFlag(1);
+      //})
+    }
+    // 获取搜索条件,返回一个json
+    // 每次添加搜索选项后,需要在此加入对应的值
+    function getSearchKeys() {
+      let para = {};
+      //// 员工
+      //let cuser = $('#cuserSearchInput').val();
+      //if (cuser.length > 0)
+      //  para.cuser = cuser;
+      //// 部门
+      //let depts = [];
+      //$('#deptSearchBtns .btn.warning').each(item => {
+      //  depts.push($(item).prop('deptid'));
+      //})
+      //if (depts.length > 0)
+      //  para.dept = depts.join(',');
+      return para;
     }
 
     // 搜索区域使用标志,1=已经使用过搜索 0=未使用过.不传则返回标志.
@@ -104,16 +149,11 @@
       }
       $('#clearSearchBtn').prop('searchFlag', flag);
     }
-    // 清空(恢复)搜索按钮
-    function clearSearchBtn_click() {
-      $('#clearSearchBtn').click(() => {
-        // 显示所有资产
-        $('#@divListId tr').removeClass('d-none');
-        // 重新获取数据,生成搜索
-        list();
-        // 按钮属性 searchFlag 0=未使用过搜索 1=已经使用过搜索
-        searchFlag(0);
-      })
+    // 重置所有搜索条件
+    function resetSearch() {
+      $('#cuserSearchInput').val('');
+      $('#mgrSearchInput').val('');
+      $('#deptSearchBtns .btn').removeClass('warning');
     }
   })(window);
 </script>

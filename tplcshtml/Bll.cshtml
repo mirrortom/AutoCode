@@ -33,7 +33,7 @@ namespace @Model.nameSpace@(".BLL")
             }
             if(data == null)
             {
-                para.ErrorMsg = AlertMsg.数据库错误.ToString();
+                para.ErrorMsg = AlertMsg.没有数据.ToString();
                 return new List<@Model.entityName>();
             }
             for (int i = 0; i < data.Length; i++)

@@ -53,7 +53,6 @@
     if (chgTitle() != 1) {
       // 去掉上次的提示语
       msg.clear();
-      chgTitle(0);
       resetForm();
       // 下拉框数据
       // createKVOptions('1,2,3,4', initSelects);
@@ -98,7 +97,12 @@
               o.value = item[o.name];
             })
             // 选中选项
-            $('#selectid1 option[value="' + item.ExcOrg + '"]')[0].selected = 'selected';
+            $('#@divEditId select[name]').each(o => {
+              let selectedVal = item[o.name];
+              let selectedOption = $(o).find('option[value="' + selectedVal + '"]');
+              if (selectedOption.length == 0) return true;
+              selectedOption[0].selected = 'selected';
+            })
             // 提示更新状态
             chgTitle(1);
           } else if (data.errcode ==@AutoCode.ErrCode.SrvExp) {
@@ -215,7 +219,7 @@
       $('#@divEditId select[name]').each(item => {
         item.selectedIndex = 0;
       })
-      chgTitle();
+      chgTitle(0);
     }
 
     /**

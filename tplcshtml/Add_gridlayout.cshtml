@@ -13,7 +13,7 @@
   {
     string dbtype = item["dbtype"];
     <div class="grids">
-      <label class="input-label grid-2 grid-lg-1">@item["fieldTitle"]</label>
+      <label class="input-label grid-2 grid-md-1">@item["fieldTitle"]</label>
       @if (dbtype.Contains("date"))
       {
         <input class="input-text grid" name="@item["fieldName"]" vtype="notnull|date" verrmsg="必填项|日期无效" type="text" value="" onclick="MyDatePick()" placeholder="请输入 @item["fieldTitle"]">

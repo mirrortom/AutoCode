@@ -18,6 +18,10 @@ namespace AutoCode
         /// </summary>
         public const int SrvExp = 500;
         /// <summary>
+        /// 拒绝请求
+        /// </summary>
+        public const int SrvDeny = 510;
+        /// <summary>
         /// 操作失败
         /// </summary>
         public const int Falid = 600;

@@ -19,8 +19,7 @@ namespace @Model.nameSpace@(".DAL")
         /// <returns></returns>
         public static @entityListType List(@Model.entityName para)
         {
-            StringBuilder sb = new StringBuilder("1=1");
-            string where = sb.ToString();
+            string where = SqlWhere(para);
             string sql = $@@"SELECT @Model.queryFields
                             FROM @Model.tableName
                             WHERE {where}
@@ -47,8 +46,7 @@ namespace @Model.nameSpace@(".DAL")
         /// <returns></returns>
         public static @entityListType All(@Model.entityName para)
         {
-            StringBuilder sb = new StringBuilder("1=1");
-            string where = sb.ToString();
+            string where = SqlWhere(para);
             string sql = $@@"SELECT @Model.queryFields
                             FROM @Model.tableName
                             WHERE {where}
@@ -58,6 +56,28 @@ namespace @Model.nameSpace@(".DAL")
             // 数据列表
             @entityListType data = db.ExecuteQuery<@Model.entityName, @Model.entityName>(sql, para);
             return data ?? null;
+        }
+
+        /// <summary>
+        /// sql条件:用于搜索时,拼接sql where的条件.并且将参数键值对加入参数字典,参数名(键)不带@@符号
+        /// </summary>
+        /// <param name="para">查询条件参数</param>
+        /// <returns></returns>
+        private static string SqlWhere(CustomsM para)
+        {
+            var dict = para.SqlPara = new Dictionary<string, object>();
+            StringBuilder sb = new StringBuilder("1=1");
+            //if (!string.IsNullOrWhiteSpace(para.Cuser))
+            //{
+            //  sb.Append(" AND e.uname like '%'+@@cuser+'%'");
+            //  dict.Add("cuser", para.Cuser);
+            //}
+            //if (!string.IsNullOrWhiteSpace(para.Dept))
+            //{
+            //  string deptswhere = DeptDal.IdsForSqlWhereOR(para.Dept, dict);
+            //  sb.Append($" AND ({deptswhere})");
+            //}
+            return sb.ToString();
         }
 
         /// <summary>
