@@ -1,0 +1,77 @@
+﻿@{
+  string divDetailId = Model.tableName + "detailBox";
+  string pkId = Model.tableName + "Id";
+  string apiListUrlKey = "Api" + Model.TableName + "List";
+}
+<div class="page" id="@divDetailId">
+  <input type="hidden" name="Id" value="" id="@pkId" />
+  <input type="hidden" name="ItemCode" value="" />
+  <p class="article-title"><span class="label">详细</span></p>
+  @foreach (Dictionary<string, string> item in Model.columns)
+  {
+    <div class="grids mg-b-5">
+      <label class="input-label grid-3 grid-md-1 text-center">@item["fieldTitle"]</label>
+      <span class="grid" bindKey="@item["fieldName"]"></span>
+    </div>
+  }
+  <hr class="line" />
+  <div class="mg-tb-10" id="msginfobox"></div>
+</div>
+<script>
+  ((win) => {
+    // help
+    let post = win.ns.post;
+    let get = win.ns.get;
+    let cfg = win.ns.cfg;
+    let page = win.ns.page;
+    let token = win.ns.token;
+    let router = win.ns.router;
+    let msg = win.msgshow('msginfobox');
+
+    //===========
+    // page init
+    //===========
+
+    // 去掉上次的提示语
+    msg.clear();
+
+    // 详细页由list页面跳过来
+    if (router.para && router.para.op == 'detail' && router.para.@pkId) {
+      $('#@pkId').val(router.para.@pkId);
+      initDetailData(router.para.@pkId);
+      router.para = null;
+    }
+    //===========
+    // function
+    //===========
+    // 请求接口
+    function initDetailData(id) {
+      post(cfg.@apiListUrlKey, { id: id})
+        .then(data => {
+          if (data.errcode == @AutoCode.ErrCode.Success) {
+            msg.clear();
+            //
+            bindValue(data.list[0]);
+          } else if (data.errcode == @AutoCode.ErrCode.SrvExp) {
+            msg.err(data.errmsg || '@AutoCode.AlertMsg.服务器错误.ToString()');
+          } else {
+            msg.info(data.errmsg || '@AutoCode.AlertMsg.没有数据.ToString()');
+          }
+        })
+        .catch(err => {
+          msg.err(err.message);
+        });
+    }
+    function bindValue(data) {
+      // 转换值单独设置
+      //$('#@divDetailId').find('[bindKey=]').text(data.val);
+      // 其它值
+      $('#@divDetailId').find('[bindKey]').each((item, index) => {
+        if ($(item).text())
+          return true;
+        let k = $(item).prop('bindKey');
+        $(item).text(data[k]);
+      });
+    }
+  })(window);
+</script>

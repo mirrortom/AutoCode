@@ -15,7 +15,7 @@
     <label class="input-label">@item["fieldTitle"]</label>
     if (dbtype.Contains("date"))
     {
-      <input class="input-text" name="@item["fieldName"]" vtype="notnull|date" verrmsg="必填项|日期无效" type="text" value="" onclick="MyDatePick()" placeholder="请输入 @item["fieldTitle"]" >
+      <input class="input-text" name="@item["fieldName"]" vtype="notnull|date" verrmsg="必填项|日期无效" type="text" value="" onclick="MyDatePick()" placeholder="请输入 @item["fieldTitle"]">
     }
     else if (dbtype.Contains("char"))
     {
@@ -55,7 +55,7 @@
       msg.clear();
       resetForm();
       // 下拉框数据
-      // createKVOptions('1,2,3,4', initSelects);
+      //createKVOptions({'kvgid1': 'kvselect1', '101': 'selectbox2', '102': 'selectbox3'});
     }
 
     // 绑定提交按钮
@@ -83,10 +83,14 @@
     function initEditData(maxCount = 20) {
       return;
       // 要等待下拉框数据填充后,才请求
-      if (!$('#selectid1 option').length || !$('#selectid2 option').length) {
-        if (maxCount <= 0) return;
-        setTimeout(() => { initEditData(maxCount - 1) }, 500);
-        return;
+      let selects = $('#@divEditId select');
+      for (var i = 0; i < selects.length; i++) {
+        if (!$(selects[i]).find('option').length) {
+          if (maxCount <= 0) return;
+          setTimeout(() => { initEditData(maxCount - 1) }, 500);
+          return;
+        }
+        console.log('下拉框填充完成.maxCount=' + maxCount);
       }
       post(cfg.@apiItemUrlKey, { id: $('#@pkId').val() })
         .then(data => {
@@ -116,16 +120,16 @@
     }
     /**
      * 下拉框填充数据(选项数据来自kv表)
-     * @@param {number|string} kvCategorys 下拉框数据分组类型,多个分组逗号隔开
-     * @@param {Function} successE 获取数据成功时执行,success(data)
+     * @@param {any} kvGidSelectId 下拉框数据分组编号为键,select框Id为值的对象.
      * @@return {any} data 取回一个以分组名为键,数组为值的json对象
      */
-    function createKVOptions(kvCategorys, successE) {
+    function createKVOptions(kvGidSelectId) {
       return;
+      let kvCategorys = Object.keys(kvGidSelectId).join(',');
       post(cfg.ApiKVList, { categorys: kvCategorys, fields: 'id,comment,title,enabled' })
         .then(data => {
           if (data.errcode == @AutoCode.ErrCode.Success) {
-            successE(data.list);
+            initSelects(data.list, kvGidSelectId);
           } else if (data.errcode == @AutoCode.ErrCode.SrvExp) {
             msg.err(data.errmsg || '@AutoCode.AlertMsg.服务器错误.ToString()');
           } else
@@ -136,8 +140,7 @@
         });
     }
     // createKVOptions的回调函数
-    function initSelects(dict) {
-      let selectDict = { 'kvcategory1': 'selectid1', 'kvcategory2': 'selectid2'};
+    function initSelects(dict, selectDict) {
       for (let k in selectDict) {
         let selectId = selectDict[k]
         if ($('#' + selectId).find('option').length) {

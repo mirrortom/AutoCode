@@ -40,7 +40,7 @@
           } else if (data.errcode == @AutoCode.ErrCode.SrvExp) {
             msg.err(data.errmsg || '@AutoCode.AlertMsg.服务器错误.ToString()');
           } else {
-            $('@divListId').empty();
+            $('#@divListId').empty();
             msg.info(data.errmsg || '@AutoCode.AlertMsg.没有数据.ToString()');
           }
         })
@@ -95,7 +95,7 @@
     // 生成搜索条件
     // refresh=true 强制重新生成搜索条件
     // 要加新的搜索方式时,在此方法加.
-    function createSearch(data, refresh) {
+    function createSearch(refresh) {
       // 为了在切换页面时,保留上次的搜索条件和结果,判断是否搜索过.没有搜索过才生成
       if (searchFlag() == 1 && refresh != true) return;
 
@@ -151,9 +151,9 @@
     }
     // 重置所有搜索条件
     function resetSearch() {
-      $('#cuserSearchInput').val('');
-      $('#mgrSearchInput').val('');
-      $('#deptSearchBtns .btn').removeClass('warning');
+      //$('#cuserSearchInput').val('');
+      //$('#mgrSearchInput').val('');
+      //$('#deptSearchBtns .btn').removeClass('warning');
     }
   })(window);
 </script>

@@ -27,6 +27,7 @@ namespace AutoCode
         private const string listTemp = "tplcshtml/List.cshtml";
         private const string addTemp = "tplcshtml/Add.cshtml";
         private const string addGridLayoutTemp = "tplcshtml/Add_gridlayout.cshtml";
+        private const string detailTemp = "tplcshtml/detail.cshtml";
         // 输出根目录
         private static string outRootDir = "CreateCode";
         // 根目录下以表名建立一个目录
@@ -81,6 +82,7 @@ namespace AutoCode
             CreateList();
             CreateAdd(cfg.FormLayout);
             CreateTabDoc();
+            CreateDetail();
 
             // 打开目录 (这个方法在windows平台有效)
             Process.Start(new ProcessStartInfo()
@@ -167,6 +169,19 @@ namespace AutoCode
                 columns = columns
             };
             BuildAndOutPutTemp(formLayout == 1 ? addTemp : addGridLayoutTemp, viewdata, $"{outFileDir}/{tableName}add.html");
+        }
+        /// <summary>
+        /// detail详情页
+        /// </summary>
+        private static void CreateDetail()
+        {
+            var viewdata = new
+            {
+                tableName = tableName,
+                TableName,
+                columns = columns
+            };
+            BuildAndOutPutTemp(detailTemp, viewdata, $"{outFileDir}/{tableName}detail.html");
         }
         /// <summary>
         /// 建立数据表文档. 一个HTML表格
