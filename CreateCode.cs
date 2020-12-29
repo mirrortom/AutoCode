@@ -28,6 +28,7 @@ namespace AutoCode
         private const string addTemp = "tplcshtml/Add.cshtml";
         private const string addGridLayoutTemp = "tplcshtml/Add_gridlayout.cshtml";
         private const string detailTemp = "tplcshtml/detail.cshtml";
+        private const string toolTemp = "tplcshtml/tool.cshtml";
         // 输出根目录
         private static string outRootDir = "CreateCode";
         // 根目录下以表名建立一个目录
@@ -83,6 +84,7 @@ namespace AutoCode
             CreateAdd(cfg.FormLayout);
             CreateTabDoc();
             CreateDetail();
+            CreateTool();
 
             // 打开目录 (这个方法在windows平台有效)
             Process.Start(new ProcessStartInfo()
@@ -275,11 +277,23 @@ namespace AutoCode
                 nameSpace = nameSpace,
                 className = dalTypeName,
                 entityName = entityTypeName,
-                queryFields = string.Join(",", columns.Select(o => o["name"]))
+                queryFields = string.Join(",", columns.Select(o => o["fieldName"]))
             };
             BuildAndOutPutTemp(dalTemp, viewdata, $"{outFileDir}/{dalTypeName}.cs");
         }
 
+        // 其它工具代码
+        private static void CreateTool()
+        {
+            var viewdata = new
+            {
+                tableName = tableName,
+                nameSpace = nameSpace,
+                className = entityTypeName,
+                columns = columns
+            };
+            BuildAndOutPutTemp(toolTemp, viewdata, $"{outFileDir}/{tableName}Tools.cs");
+        }
         /// <summary>
         /// 编译模板,输出到文件
         /// </summary>
@@ -350,7 +364,7 @@ WHERE c.object_id =
             if (dbtype.Contains("int") || dbtype.Contains("bit"))
                 return "int";
             // 使用DateTimeOffset时间类型时,sqlserver对应时间类型要使用datetimeoffset(7),否则转实体类失败
-            if (dbtype.Contains("date"))
+            if (dbtype.Contains("datetimeoffset"))
                 return nameof(DateTimeOffset);
             if (dbtype.Contains("decimal") || dbtype.Contains("money") || dbtype.Contains("float"))
                 return "decimal";

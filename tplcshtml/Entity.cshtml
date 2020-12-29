@@ -11,14 +11,11 @@ namespace @Model.nameSpace@(".Entity")
 {
   string fieldName = item["fieldName"];
   if (fieldName.ToLower() == "id") continue;
-  else if (fieldName.ToLower() == "status") continue;
-  else
-  {
+  if (fieldName.ToLower() == "onff") continue;
     @("        ///") <summary>
     @("    ///") @item["comment"]
     @("    ///") </summary>
     @("        public ") @(item["fieldType"]) @(" " + item["fieldName"]) @(";\r\n\r\n") 
-  }
 }
     }
 }

@@ -1,0 +1,28 @@
+﻿using System;
+using @Model.nameSpace@(".Entity");
+namespace @Model.nameSpace@(".BLL")
+{
+    /// <summary>
+    /// 工具
+    /// </summary>
+    public class @Model.tableName@("Tools")
+    {
+        /// <summary>
+        /// 判断 @Model.className 类的两个实例是否相等,通过比较字段的值.
+        /// </summary>
+        /// <param name="t1"></param>
+        /// <param name="t2"></param>
+        /// <returns></returns>
+        private static bool Eq@(Model.className)(OrdersM t1, OrdersM t2)
+        {
+    @foreach (Dictionary<string,string> item in Model.columns)
+    {
+      string fieldName = item["fieldName"];
+      if (fieldName.ToLower() == "id") continue;
+      if (fieldName.ToLower() == "onff") continue;
+        @("            if (t1.")@(fieldName)@(" != t2.")@(fieldName)@(") return false;\r\n")
+    }
+            return true;
+        }
+    }
+}

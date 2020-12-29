@@ -10,7 +10,7 @@ namespace AutoCode
             {
                 ConnStr = @"server=(localdb)\.\mylocaldb;uid=sa;pwd=123456;Initial Catalog=mldco",
                 NS = "mld",
-                TableName = "orders",
+                TableName = "ordercstr",
                 ApiVersion = 1,
                 FormLayout = 2
             };

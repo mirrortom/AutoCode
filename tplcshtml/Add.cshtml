@@ -39,11 +39,13 @@
   ((win) => {
     // help
     let post = win.ns.post;
+    let postAsync = win.ns.postAsync;
     let get = win.ns.get;
     let cfg = win.ns.cfg;
     let page = win.ns.page;
     let token = win.ns.token;
     let router = win.ns.router;
+    let errtxt = win.ns.errtxt;
     let msg = win.msgshow('msginfobox');
 
     //===========
@@ -80,7 +82,7 @@
      * 由list页面跳过来编辑时,需要请求数据填充表单.
      * @@param {number} maxCount 最多请求次数
      */
-    function initEditData(maxCount = 20) {
+    async function initEditData(maxCount = 20) {
       return;
       // 要等待下拉框数据填充后,才请求
       let selects = $('#@divEditId select');
@@ -90,11 +92,11 @@
           setTimeout(() => { initEditData(maxCount - 1) }, 500);
           return;
         }
-        console.log('下拉框填充完成.maxCount=' + maxCount);
+        //console.log('下拉框填充完成.maxCount=' + maxCount);
       }
-      post(cfg.@apiItemUrlKey, { id: $('#@pkId').val() })
-        .then(data => {
-          if (data.errcode == @AutoCode.ErrCode.Success) {
+      try {
+        let data = await postAsync(cfg.@apiItemUrlKey, { id: $('#@pkId').val() });
+        if (data.errcode == @AutoCode.ErrCode.Success) {
             let item = data.item;
             // 填充表单
             $('#@divEditId input[name]').each(o => {
@@ -109,35 +111,33 @@
             })
             // 提示更新状态
             chgTitle(1);
-          } else if (data.errcode ==@AutoCode.ErrCode.SrvExp) {
-            msg.err(data.errmsg || '@AutoCode.AlertMsg.服务器错误.ToString()');
-          } else
-            msg.info(data.errmsg);
-        })
-        .catch(err => {
-          msg.err(err.message);
-        });
+        } else if (data.errcode == @AutoCode.ErrCode.SrvExp)
+          msg.err(data.errmsg || errtxt[data.errcode]);
+        else
+          msg.info(data.errmsg || errtxt[data.errcode]);
+      } catch (err) {
+        msg.err(err.message);
+      }
     }
     /**
      * 下拉框填充数据(选项数据来自kv表)
      * @@param {any} kvGidSelectId 下拉框数据分组编号为键,select框Id为值的对象.
      * @@return {any} data 取回一个以分组名为键,数组为值的json对象
      */
-    function createKVOptions(kvGidSelectId) {
+    async function createKVOptions(kvGidSelectId) {
       return;
       let kvCategorys = Object.keys(kvGidSelectId).join(',');
-      post(cfg.ApiKVList, { categorys: kvCategorys, fields: 'id,comment,title,enabled' })
-        .then(data => {
-          if (data.errcode == @AutoCode.ErrCode.Success) {
+      try {
+        let data = await postAsync(cfg.ApiKVList, { categorys: kvCategorys, fields: 'id,comment,title,enabled' });
+        if (data.errcode == @AutoCode.ErrCode.Success) {
             initSelects(data.list, kvGidSelectId);
-          } else if (data.errcode == @AutoCode.ErrCode.SrvExp) {
-            msg.err(data.errmsg || '@AutoCode.AlertMsg.服务器错误.ToString()');
-          } else
-            msg.info(data.errmsg);
-        })
-        .catch(err => {
-          msg.err(err.message);
-        });
+          } else if (data.errcode == @AutoCode.ErrCode.SrvExp)
+            msg.err(data.errmsg || errtxt[data.errcode]);
+           else
+            msg.info(data.errmsg || errtxt[data.errcode]);
+      } catch (err){
+        msg.err(err.message);
+      };
     }
     // createKVOptions的回调函数
     function initSelects(dict, selectDict) {
@@ -162,7 +162,7 @@
      * 添加按钮
      * @@param thisobj 按钮对象
      */
-    function add(thisobj) {
+    async function add(thisobj) {
       return;
       // 验证
       let para = formCheck();
@@ -171,23 +171,21 @@
         return;
       }
       // 发包
-      post(cfg.@apiAddUrlKey, para)
-        .then(data => {
-          if (data.errcode == @AutoCode.ErrCode.Success) {
-            msg.ok('服务器返回成功!');
+      try {
+        let data = await postAsync(cfg.@apiAddUrlKey, para);
+        if (data.errcode == @AutoCode.ErrCode.Success) {
+            msg.ok(errtxt[data.errcode]);
             // 成功后重置表单
             resetForm();
-
           } else if (data.errcode == @AutoCode.ErrCode.SrvExp) {
-            msg.err(data.errmsg || '@AutoCode.AlertMsg.服务器错误.ToString()');
+            msg.err(data.errmsg || errtxt[data.errcode]);
           } else
-            msg.info(data.errmsg);
+            msg.info(data.errmsg || errtxt[data.errcode]);
           $ui.clsBtnLoading(thisobj, 500);
-        })
-        .catch(err => {
-          msg.err(err.message);
-          $ui.clsBtnLoading(thisobj, 500);
-        });
+      } catch (err) {
+        msg.err(err.message);
+        $ui.clsBtnLoading(thisobj, 500);
+      }
     }
 
     /**
@@ -207,16 +205,12 @@
      * 重置表单数据
      */
     function resetForm() {
-      let today = $.datefmt(new Date(), 'yyyy/MM/dd');
-      // 字段重置
-      let def = {
-        @foreach (Dictionary<string, string> item in Model.columns)
-        {
-            @("        "+item["fieldName"]) @Raw(" :" + "'',\r\n")
-        }
-      };
+      // 字段重置,默认input置空,select置为0位选项.如果需要自定义,单独设置
       $('#@divEditId input[name]').each(item => {
-        item.value = def[item.name];
+        item.value = '';
+      })
+      $('#@divEditId textarea[name]').each(item => {
+        item.value = '';
       })
       // 选项重置
       $('#@divEditId select[name]').each(item => {

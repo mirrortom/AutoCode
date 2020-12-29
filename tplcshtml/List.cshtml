@@ -15,9 +15,11 @@
   ((win) => {
     // help
     let post = win.ns.post;
+    let postAsync = win.ns.postAsync;
     let get = win.ns.get;
     let cfg = win.ns.cfg;
     let router = win.ns.router;
+    let errtxt = win.ns.errtxt;
     let msg = win.msgshow('msginfobox');
     //===========
     // page init
@@ -30,23 +32,22 @@
     //===========
 
     // table data
-    function list() {
+    async function list() {
       let searchKeys = getSearchKeys();
-      post(cfg.@apiListUrlKey, searchKeys)
-        .then(data => {
-          if (data.errcode == @AutoCode.ErrCode.Success) {
+      let data = await postAsync(cfg.@apiListUrlKey, searchKeys);
+      try {
+        if (data.errcode == @AutoCode.ErrCode.Success) {
             msg.clear();
             createTable(data.list);
           } else if (data.errcode == @AutoCode.ErrCode.SrvExp) {
-            msg.err(data.errmsg || '@AutoCode.AlertMsg.服务器错误.ToString()');
+            msg.err(data.errmsg || errtxt[data.errcode]);
           } else {
             $('#@divListId').empty();
-            msg.info(data.errmsg || '@AutoCode.AlertMsg.没有数据.ToString()');
+            msg.info(data.errmsg || errtxt[data.errcode]);
           }
-        })
-        .catch(err => {
-          msg.err(err.message);
-        });
+      } catch (err) {
+        msg.err(err.message);
+      }
     }
     function createTable(data) {
       // tab header
