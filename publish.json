@@ -1,0 +1,22 @@
+{
+  // 源文件目录名(例如:src 相对路径,相对于项目根目录)
+  "sourceDir": "src",
+  // 发布目录名(例如: 'dist' 或 'd:/pubdir' 相对路径或绝对路径)
+  "distDir": "dist",
+  // 发布整个项目时,发布前删除发布目录所有内容
+  "emptyPublishDir": "false",
+  // 发布整个项目时,编译项目后发布bin文件夹
+  "buildBin": "false",
+  // 对js,css,html压缩输出(0=不压缩,7=都压缩. 1=html,2=css,4=js)
+  "miniOutput": 7,
+  // 允许发布的文件扩展名
+  "allowExts": [ ".htm", ".html", ".cshtml", ".config", ".js", ".css", ".json", ".jpg", ".jpeg", ".gif", ".png", ".bmp", ".woff", ".woff2", ".ttf", ".svg", ".eot", ".otf" ],
+  // 不允许发布的文件后缀名
+  "denySuffix": [ "layout.cshtml", "part.cshtml", "part.js", "part.css" ],
+  // 不允许发布的文件(例如:bundleconfig.json data/data.mdb 相对路径的文件名,相对于项目根目录)
+  "denyFiles": [],
+  // 不允许发布的目录(例如:cfg 相对路径,相对于项目根目录)
+  "denyDirs": [],
+  // 公共变量,一个json键值对例如{ name : 'mirror' , ... },将作为匿名对象作为Model传给cshtml文件,调用方法@Model.name
+  "globleVar": null
+}

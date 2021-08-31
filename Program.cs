@@ -6,12 +6,17 @@ namespace AutoCode
     {
         static void Main(string[] args)
         {
+            // sqlserver数据库
+            string sqlserver = @"server=(localdb)\.\mylocaldb;uid=sa;pwd=123456;Initial Catalog=mldco";
+            // mariadb数据库
+            string mariadb = @"server=localhost;port=3306;database=test;user=root;password=123456;SslMode = none;";
             Cfg cfg = new Cfg()
             {
-                ConnStr = @"server=(localdb)\.\mylocaldb;uid=sa;pwd=123456;Initial Catalog=mldco",
-                NS = "mld",
-                TableName = "ordercstr",
-                ApiVersion = 1,
+                DataBaseType = 1,
+                ConnStr = mariadb,
+                TableName = "emp",
+                NS = "testproj",
+                WebApiVersion = 1,
                 FormLayout = 2
             };
             Console.WriteLine($"开始生成程序,wait...");

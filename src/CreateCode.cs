@@ -49,6 +49,7 @@ namespace AutoCode
         #endregion
 
         /// <summary>
+        /// 查库得到的表字段信息数据.
         /// 查库后含有键: name,dbtype,maxlen,info,increment,ispk,benull (不要修改这些,要转换另外加键)
         /// </summary>
         private static Dictionary<string, string>[] columns;
@@ -59,7 +60,7 @@ namespace AutoCode
         /// <param name="tabName">表名</param>
         /// <param name="nSpace">程序命名空间</param>
         /// <param name="connStr">DB连接串</param>
-        /// <param name="apiVersion">可选值"apicore"(.net core版本,默认是framework版本)</param>
+        /// <param name="apiVersion">1=.netcore(默认) 2=.netframework</param>
         /// <param name="outDir">输出目录</param>
         public static void Run(Cfg cfg)
         {
@@ -68,18 +69,17 @@ namespace AutoCode
             Init(cfg.TableName, cfg.NS, cfg.OutPutDir);
 
             // table info 取得数据表的列字段信息
-            SQLServer db = new SQLServer(cfg.ConnStr);
-            GetColumns(db);
-            //
-            FieldNameToCsName();
-            FieldTitle();
-            FieldValidMaxLen();
+            columns = QueryHelp.GetColumns(cfg);
+            // 字段转换
+            FieldHelp.ToCsName(columns);
+            FieldHelp.AddTitle(columns);
+            FieldHelp.AddValidMaxLen(columns);
 
             // create codes 生成各代码文件
             CreateDal();
             CreateEntity();
             CreateBll();
-            CreateApi(cfg.ApiVersion);
+            CreateApi(cfg.WebApiVersion);
             CreateList();
             CreateAdd(cfg.FormLayout);
             CreateTabDoc();
@@ -109,12 +109,14 @@ namespace AutoCode
                 throw new Exception("未填写表名!");
             if (string.IsNullOrWhiteSpace(cfg.NS))
                 throw new Exception("未填写命名空间!");
-            if (!(cfg.ApiVersion == 1 || cfg.ApiVersion == 2))
+            if (!(cfg.DataBaseType == 1 || cfg.DataBaseType == 2))
+                throw new Exception("数据库类型选项无效");
+            if (!(cfg.WebApiVersion == 1 || cfg.WebApiVersion == 2))
                 throw new Exception("api版本选项无效");
             if (string.IsNullOrWhiteSpace(cfg.OutPutDir))
                 throw new Exception("未填写输出目录!");
             if (!(cfg.FormLayout == 1 || cfg.FormLayout == 2))
-                throw new Exception("add页面表单布局选项无效");
+                throw new Exception("新增/编辑页面表单布局选项无效");
         }
 
         private static void Init(string tabName, string nSpace, string outDir)
@@ -122,8 +124,8 @@ namespace AutoCode
             // data init
             tableName = tabName;
             // 命名空间和类名首字母大写
-            nameSpace = nSpace.Substring(0, 1).ToUpper() + nSpace.Substring(1);
-            TableName = tableName.Substring(0, 1).ToUpper() + tableName.Substring(1);
+            nameSpace = nSpace.Substring(0, 1).ToUpper() + nSpace[1..];
+            TableName = tableName.Substring(0, 1).ToUpper() + tableName[1..];
             entityTypeName = TableName + 'M';
             dalTypeName = TableName + "Dal";
             bllTypeName = TableName + "Bll";
@@ -254,7 +256,7 @@ namespace AutoCode
                 }
                 item.Add("comment", comment);
                 // 数据库字段类型转C#类型
-                item.Add("fieldType", FieldTypeToCsType(dbtype));
+                item.Add("fieldType", FieldHelp.ToCsType(dbtype));
             }
             //
             var viewdata = new
@@ -282,7 +284,7 @@ namespace AutoCode
             BuildAndOutPutTemp(dalTemp, viewdata, $"{outFileDir}/{dalTypeName}.cs");
         }
 
-        // 其它工具代码
+        // 其它工具类代码
         private static void CreateTool()
         {
             var viewdata = new
@@ -314,110 +316,11 @@ namespace AutoCode
             StreamWriter sw = new StreamWriter(outputPath);
             sw.Write(result);
             sw.Dispose();
-        }
+        }        
 
-        /// <summary>
-        /// 查询数据库表,得到所有的列.是一个字典数组
-        /// </summary>
-        private static void GetColumns(SQLServer db)
-        {
-            string sql = $@"
-SELECT
-    CASE WHEN pk.COLUMN_NAME IS NULL THEN '' ELSE 'Y' END as ispk,
-	CASE(c.is_identity) WHEN 1 THEN 'Y' ELSE '' END as increment,
-	c.name,
-	t.name dbtype,
-	c.max_length maxlen,
-	CASE(c.is_nullable) WHEN 0 THEN 'NOT NULL' ELSE 'NULL' END AS benull,
-	p.value info
-FROM sys.columns c
-LEFT JOIN sys.systypes  t ON t.xusertype=c.system_type_id
-LEFT JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE pk ON pk.COLUMN_NAME=c.name AND pk.TABLE_NAME='{tableName}'
-LEFT JOIN sys.extended_properties p ON p.minor_id=c.column_id AND p.major_id=c.object_id
-WHERE c.object_id = 
-    (SELECT object_id FROM sys.tables WHERE type='U' AND name='{tableName}')";
-            var data = db.ExecuteQuery(sql);
-            // 查库后含有键: name,dbtype,maxlen,info (不要修改这些,要转换另外加键)
-            columns = new Dictionary<string, string>[data.Length];
-            for (int i = 0, len = data.Length; i < len; i++)
-            {
-                columns[i] = new Dictionary<string, string>();
-                foreach (var key in data[i].Keys)
-                {
-                    columns[i].Add(key, data[i][key].ToString());
-                }
-            }
-        }
 
-        /// <summary>
-        /// 数据表字段类型转换为C#类型
-        /// db field type transfer c# type
-        /// </summary>
-        /// <param name="dbtype"></param>
-        /// <returns></returns>
-        private static string FieldTypeToCsType(string dbtype)
-        {
-            if (dbtype.Contains("char"))
-                return "string";
-            if (dbtype.Contains("bigint"))
-                return "long";
-            if (dbtype.Contains("int") || dbtype.Contains("bit"))
-                return "int";
-            // 使用DateTimeOffset时间类型时,sqlserver对应时间类型要使用datetimeoffset(7),否则转实体类失败
-            if (dbtype.Contains("datetimeoffset"))
-                return nameof(DateTimeOffset);
-            if (dbtype.Contains("decimal") || dbtype.Contains("money") || dbtype.Contains("float"))
-                return "decimal";
-            return "string";
-        }
+        
 
-        /// <summary>
-        /// 数据表字段名字,转换为c#类名字.首字母大写
-        /// </summary>
-        private static void FieldNameToCsName()
-        {
-            foreach (var item in columns)
-            {
-                // 属性名首字母大写
-                item.Add("fieldName", item["name"].Substring(0, 1).ToUpper() + item["name"].Substring(1));
-            }
-        }
-
-        /// <summary>
-        /// 数据表字段的标题.取注释第一个词(空格分开的),没有就是字段名字
-        /// </summary>
-        private static void FieldTitle()
-        {
-            foreach (var item in columns)
-            {
-                string title = item["name"];
-                if (!string.IsNullOrWhiteSpace(item["info"]))
-                {
-                    title = item["info"].Split(' ')[0];
-                }
-                item.Add("fieldTitle", title);
-            }
-        }
-
-        /// <summary>
-        /// 数据表字段的长度,用于页面验证参考.如果是char类型的,并且是n开头的char类型,长度要减半.
-        /// </summary>
-        private static void FieldValidMaxLen()
-        {
-            foreach (var item in columns)
-            {
-                string dbtype = item["dbtype"];
-                int maxlen = int.Parse(item["maxlen"]);
-                item.Add("validMaxLen", item["maxlen"]);
-                if (dbtype.Contains("char"))
-                {
-                    // 字符串类型的属性,注释加上长度,用于表单验证参考.如果是n开头的char.长度减半
-                    if (dbtype.Substring(0, 1) == "n")
-                    {
-                        item["validMaxLen"] = (maxlen / 2).ToString();
-                    }
-                }
-            }
-        }
+        
     }
 }

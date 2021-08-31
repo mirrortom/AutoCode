@@ -12,7 +12,7 @@
   @foreach (Dictionary<string, string> item in Model.columns)
   {
     string dbtype = item["dbtype"];
-    <label class="input-label">@item["fieldTitle"]</label>
+    <label class="form-label">@item["fieldTitle"]</label>
     if (dbtype.Contains("date"))
     {
       <input class="input-text" name="@item["fieldName"]" vtype="notnull|date" verrmsg="必填项|日期无效" type="text" value="" onclick="MyDatePick()" placeholder="请输入 @item["fieldTitle"]">
@@ -29,24 +29,25 @@
   }
   <hr class="line" />
   <div class="grids-3">
-    <a class="btn lg success" id="@submitBtnId">提交</a>
+    <m-btn class="lg success" id="@submitBtnId">提交</m-btn>
     <i></i>
-    <a class="btn lg" id="resetFormBtn">清空(重置)</a>
+    <m-btn class="lg d-none" id="resetFormBtn">清空(重置)</m-btn>
   </div>
-  <div class="mg-tb-10" id="msginfobox"></div>
+  <m-msgshow class="mg-tb-10" id="msginfobox"></m-msgshow>
 </div>
 <script>
   ((win) => {
     // help
-    let post = win.ns.post;
-    let postAsync = win.ns.postAsync;
-    let get = win.ns.get;
     let cfg = win.ns.cfg;
-    let page = win.ns.page;
     let token = win.ns.token;
+    let tol = win.ns.tool;
+    let post = tool.post;
+    let postAsync = tool.postAsync;
+    let get = tool.get;
+    let page = win.ns.page;
     let router = win.ns.router;
     let errtxt = win.ns.errtxt;
-    let msg = win.msgshow('msginfobox');
+    let msg = document.getElementById('msginfobox');
 
     //===========
     // page init
@@ -167,7 +168,7 @@
       // 验证
       let para = formCheck();
       if (para == false) return;
-      if ($ui.isBtnLoading(thisobj)) {
+      if (thisobj.isLoading()) {
         return;
       }
       // 发包
@@ -181,10 +182,10 @@
             msg.err(data.errmsg || errtxt[data.errcode]);
           } else
             msg.info(data.errmsg || errtxt[data.errcode]);
-          $ui.clsBtnLoading(thisobj, 500);
+        thisobj.clsLoading();
       } catch (err) {
         msg.err(err.message);
-        $ui.clsBtnLoading(thisobj, 500);
+        thisobj.clsLoading();
       }
     }
 

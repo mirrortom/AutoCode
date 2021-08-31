@@ -1,0 +1,18 @@
+[
+  {
+    "outputFileName": "globle.js",
+    "inputFiles": [
+      "globlejs/_start.part.js",
+      "globlejs/cfg.part.js",
+      "globlejs/errtxt.part.js",
+      "globlejs/token.part.js",
+      "globlejs/tool.part.js",
+      "globlejs/appevent.part.js",
+      "globlejs/router.part.js",
+      "globlejs/_end.part.js"
+    ],
+    "minify": {
+      "enabled": false
+    }
+  }
+]
