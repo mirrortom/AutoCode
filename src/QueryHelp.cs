@@ -9,7 +9,9 @@ namespace AutoCode
     {
         /// <summary>
         /// 查询数据库表,得到所有的列.是一个字典数组.
-        /// 含有键:name(字段名字),dbtype(类型),maxlen(长度),info(说明),
+        /// 含有键:name(字段名字),dbtype(类型),maxlen(长度,字符串类型适用),info(说明),
+        /// decimal_precision(decimal(M,D)的M值),decimal_scale(decimal的D值)
+        /// datetime_precision(datetime2(n)的n值,mssql中,datetime的n默认是3)
         /// ispk(是否主键[Y/'']),increment(是否自增长[Y/'']),benull(是否可空[NOT NULL/NULL])
         /// </summary>
         public static Dictionary<string, string>[] GetColumns(Cfg cfg)
@@ -55,6 +57,9 @@ SELECT
 	c.name,
 	t.name AS dbtype,
 	c.max_length AS maxlen,
+    c.precision AS decimal_precision,
+    c.scale AS decimal_scale,
+    c.scale AS datetime_precision,
 	CASE(c.is_nullable) WHEN 0 THEN 'NOT NULL' ELSE 'NULL' END AS benull,
 	p.value AS info
 FROM sys.columns c
@@ -74,12 +79,15 @@ WHERE c.object_id =
         private static string MariaSql(string tableName)
         {
             string sql = $@"
-SELECT 
+SELECT
     CASE column_key WHEN 'PRI' THEN 'Y' ELSE '' END AS ispk,
     CASE extra WHEN 'auto_increment' THEN 'Y' ELSE '' END AS increment,
     COLUMN_NAME AS name,
     data_type AS dbtype,
     character_maximum_length AS maxlen,
+    NUMERIC_precision AS decimal_precision,
+    numeric_scale AS decimal_scale,
+    datetime_precision AS datetime_precision,
     CASE is_nullable WHEN 'NO' THEN 'NOT NULL' ELSE 'NULL' END AS benull,
     column_comment AS info
 FROM information_schema.`COLUMNS`

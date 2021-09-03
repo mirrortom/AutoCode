@@ -25,9 +25,10 @@ namespace AutoCode
             // 使用DateTimeOffset时间类型时,sqlserver对应时间类型要使用datetimeoffset(7),否则转实体类失败
             if (dbtype.Contains("datetimeoffset"))
                 return nameof(DateTimeOffset);
+            // DateTime类型可以对应数据库时间类型 mssql:datetime2(0~7) maria:datetime(0~6)
             if (dbtype.Contains("datetime"))
                 return nameof(DateTime);
-            if (dbtype.Contains("decimal") || dbtype.Contains("money") || dbtype.Contains("float"))
+            if (dbtype.Contains("decimal") || dbtype.Contains("money") || dbtype.Contains("float") || dbtype.Contains("double"))
                 return "decimal";
             return "string";
         }
@@ -83,6 +84,90 @@ namespace AutoCode
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// 数据库字段类型和精度信息格式化,MSSQL/MARIA
+        /// 例如 char 3, CHAR(3). datetime 6, DATETIME(6)
+        /// decimal 10,2 ,DECIMAL(10,2)
+        /// </summary>
+        /// <param name="columns"></param>
+        public static void DbTypeAndLengthFormat(Dictionary<string, string>[] columns)
+        {
+            foreach (var item in columns)
+            {
+                string dbtype = item["dbtype"];
+                _ = int.TryParse(item["validMaxLen"], out int charlen);
+                _ = int.TryParse(item["decimal_precision"], out int decimalM);
+                _ = int.TryParse(item["decimal_scale"], out int decimalD);
+                _ = int.TryParse(item["datetime_precision"], out int datetime_precision);
+                item.Add("mssqlDbType", FieldHelp.MssqlTypeFormat(dbtype, charlen, decimalM, decimalD, datetime_precision));
+                item.Add("mariaDbType", FieldHelp.MssqlToMariaType(dbtype, charlen, decimalM, decimalD, datetime_precision));
+            }
+        }
+
+        /// <summary>
+        /// mssql转maria数据库类型.只实现了有限类型个数转换
+        /// </summary>
+        /// <param name="dbtype"></param>
+        /// <param name="charlen"></param>
+        /// <returns></returns>
+        private static string MssqlToMariaType(string dbtype, int charlen, int decimalM, int decimalD, int datetime_precision)
+        {
+            if (dbtype == "char" || dbtype == "nchar")
+                return $"CHAR({charlen})";
+            if (dbtype == "varchar" || dbtype == "nvarchar")
+            {
+                // 这种是varcahr(max)的情况
+                if (charlen == -1)
+                    return "TEXT";
+                return $"VARCHAR({charlen})";
+            }
+            if (dbtype == "bigint" || dbtype == "int" || dbtype == "bit" || dbtype == "tinyint" || dbtype == "smallint")
+                return dbtype.ToUpper();
+            if (dbtype == "decimal")
+                return $"DECIMAL({decimalM},{decimalD})";
+            // datetimeoffset,datetime2,datetime都对应maria的datetime
+            if (dbtype.Contains("datetime"))
+            {
+                if(datetime_precision>6)
+                    return $"DATETIME(6)";
+                return $"DATETIME({datetime_precision})";
+            }
+            throw new Exception($"mssql类型 [{dbtype}] 转换maria失败!");
+        }
+
+        /// <summary>
+        /// mssql数据类型和长度信息格式化.例如: decimal 18 2 格式化为 decimal(18,2)
+        /// </summary>
+        /// <param name="dbtype"></param>
+        /// <param name="charlen"></param>
+        /// <param name="decimalM"></param>
+        /// <param name="decimalD"></param>
+        /// <param name="datetime_precision"></param>
+        /// <returns></returns>
+        private static string MssqlTypeFormat(string dbtype, int charlen, int decimalM, int decimalD, int datetime_precision)
+        {
+            if (dbtype == "char" || dbtype == "nchar")
+                return $"{dbtype}({charlen})";
+            if (dbtype == "varchar" || dbtype == "nvarchar")
+            {
+                // 这种是varcahr(max)的情况
+                if (charlen == -1)
+                    return $"{dbtype}(MAX))";
+                return $"{dbtype}({charlen})";
+            }
+            if (dbtype == "bigint" || dbtype == "int" || dbtype == "bit" || dbtype == "tinyint" || dbtype == "smallint")
+                return dbtype.ToUpper();
+            if (dbtype == "decimal")
+                return $"DECIMAL({decimalM},{decimalD})";
+            if (dbtype == "datetime")
+                return "DATETIME";
+            if (dbtype == "datetime2")
+                return $"DATETIME2({datetime_precision})";
+            if (dbtype == "datetimeoffset")
+                return $"datetimeoffset({datetime_precision})";
+            throw new Exception($"mssql类型 [{dbtype}] 格式化失败!");
         }
     }
 }

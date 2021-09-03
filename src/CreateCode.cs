@@ -23,12 +23,13 @@ namespace AutoCode
         private const string bllTemp = "tplcshtml/Bll.cshtml";
         private const string apiTemp = "tplcshtml/Api.cshtml";
         private const string apiCoreTemp = "tplcshtml/ApiCore.cshtml";
-        private const string tableDocTemp = "tplcshtml/TableDoc.cshtml";
         private const string listTemp = "tplcshtml/List.cshtml";
         private const string addTemp = "tplcshtml/Add.cshtml";
         private const string addGridLayoutTemp = "tplcshtml/Add_gridlayout.cshtml";
         private const string detailTemp = "tplcshtml/detail.cshtml";
         private const string toolTemp = "tplcshtml/tool.cshtml";
+        private const string tableDocTemp = "tplcshtml/TableDoc.cshtml";
+        private const string tableCreateMariaTemp = "tplcshtml/TableCreateMaria.cshtml";
         // 输出根目录
         private static string outRootDir = "CreateCode";
         // 根目录下以表名建立一个目录
@@ -55,7 +56,7 @@ namespace AutoCode
         private static Dictionary<string, string>[] columns;
 
         /// <summary>
-        /// 生成CRUD代码.(只用于sqlserver)
+        /// 生成CRUD代码.C# .net项目
         /// </summary>
         /// <param name="tabName">表名</param>
         /// <param name="nSpace">程序命名空间</param>
@@ -74,17 +75,19 @@ namespace AutoCode
             FieldHelp.ToCsName(columns);
             FieldHelp.AddTitle(columns);
             FieldHelp.AddValidMaxLen(columns);
+            FieldHelp.DbTypeAndLengthFormat(columns);
 
             // create codes 生成各代码文件
-            CreateDal();
-            CreateEntity();
-            CreateBll();
-            CreateApi(cfg.WebApiVersion);
-            CreateList();
-            CreateAdd(cfg.FormLayout);
+            //CreateDal();
+            //CreateEntity();
+            //CreateBll();
+            //CreateApi(cfg.WebApiVersion);
+            //CreateList();
+            //CreateAdd(cfg.FormLayout);
+            //CreateDetail();
+            //CreateTool();
+            CreateTabCreateMariaSql();
             CreateTabDoc();
-            CreateDetail();
-            CreateTool();
 
             // 打开目录 (这个方法在windows平台有效)
             Process.Start(new ProcessStartInfo()
@@ -139,6 +142,36 @@ namespace AutoCode
             Directory.CreateDirectory(outFileDir);
 
         }
+
+        //-- 模板页面生成 --//
+
+        /// <summary>
+        /// 生成maria的建表sql语句.(主要用于已有mssql转maria)
+        /// </summary>
+        private static void CreateTabCreateMariaSql()
+        {
+            var viewdata = new
+            {
+                tableName = tableName,
+                columns = columns
+            };
+            BuildAndOutPutTemp(tableCreateMariaTemp, viewdata, $"{outFileDir}/{tableName}.create.maria.sql");
+        }
+
+        /// <summary>
+        /// 建立数据表文档. 一个HTML表格
+        /// </summary>
+        private static void CreateTabDoc()
+        {
+            var viewdata = new
+            {
+                tableName = tableName,
+                columns = columns
+            };
+            BuildAndOutPutTemp(tableDocTemp, viewdata, $"{outFileDir}/{tableName}.doc.html");
+        }
+
+
         /// <summary>
         /// list列表页
         /// </summary>
@@ -187,18 +220,7 @@ namespace AutoCode
             };
             BuildAndOutPutTemp(detailTemp, viewdata, $"{outFileDir}/{tableName}detail.html");
         }
-        /// <summary>
-        /// 建立数据表文档. 一个HTML表格
-        /// </summary>
-        private static void CreateTabDoc()
-        {
-            var viewdata = new
-            {
-                tableName = tableName,
-                columns = columns
-            };
-            BuildAndOutPutTemp(tableDocTemp, viewdata, $"{outFileDir}/{tableName}.doc.html");
-        }
+
         private static void CreateApi(int apiVersion)
         {
             // json字段,按需返回. data.Select(o=>new{以下拼接字段内容,默认所有列名})
@@ -316,11 +338,11 @@ namespace AutoCode
             StreamWriter sw = new StreamWriter(outputPath);
             sw.Write(result);
             sw.Dispose();
-        }        
+        }
 
 
-        
 
-        
+
+
     }
 }

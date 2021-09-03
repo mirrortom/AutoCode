@@ -33,6 +33,9 @@
     <None Update="tplcshtml\Add.cshtml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="tplcshtml\TableCreateMaria.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="tplcshtml\Entity.cshtml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

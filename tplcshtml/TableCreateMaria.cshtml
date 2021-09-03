@@ -1,0 +1,20 @@
+﻿@*create table脚本,maria版本.支持从sqlserver表转换到maria表*@
+-- @Model.tableName 建表sql Maria
+CREATE TABLE `@Model.tableName`(
+@{
+    System.Text.StringBuilder sb = new System.Text.StringBuilder();
+    @foreach (Dictionary<string, string> item in Model.columns)
+    {
+      string name = item["name"];
+      string dbtype = item["mariaDbType"];
+      string benull = item["benull"];
+      string comment = item["info"];
+      string pk = item["ispk"] == "Y" ? " PRIMARY KEY" : "";
+      string increment = item["increment"] == "Y" ? " AUTO_INCREMENT" : "";
+      string txt = $"    `{name}` {dbtype} {benull} COMMENT '{comment}'{pk}{increment},";
+      sb.AppendLine(txt);
+    }
+    string sql = sb.ToString().TrimEnd(',','\r','\n');
+    @Raw(sql+"\r\n")
+  }
+)
