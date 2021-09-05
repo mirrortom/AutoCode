@@ -51,23 +51,17 @@ namespace AutoCode
 
         /// <summary>
         /// 查库得到的表字段信息数据.
-        /// 查库后含有键: name,dbtype,maxlen,info,increment,ispk,benull (不要修改这些,要转换另外加键)
         /// </summary>
         private static Dictionary<string, string>[] columns;
 
         /// <summary>
         /// 生成CRUD代码.C# .net项目
         /// </summary>
-        /// <param name="tabName">表名</param>
-        /// <param name="nSpace">程序命名空间</param>
-        /// <param name="connStr">DB连接串</param>
-        /// <param name="apiVersion">1=.netcore(默认) 2=.netframework</param>
-        /// <param name="outDir">输出目录</param>
         public static void Run(Cfg cfg)
         {
             CheckCfg(cfg);
             // 
-            Init(cfg.TableName, cfg.NS, cfg.OutPutDir);
+            Init(cfg);
 
             // table info 取得数据表的列字段信息
             columns = QueryHelp.GetColumns(cfg);
@@ -78,7 +72,7 @@ namespace AutoCode
             FieldHelp.DbTypeAndLengthFormat(columns);
 
             // create codes 生成各代码文件
-            //CreateDal();
+            CreateDal(cfg.DataBaseType);
             //CreateEntity();
             //CreateBll();
             //CreateApi(cfg.WebApiVersion);
@@ -86,8 +80,8 @@ namespace AutoCode
             //CreateAdd(cfg.FormLayout);
             //CreateDetail();
             //CreateTool();
-            CreateTabCreateMariaSql();
-            CreateTabDoc();
+            //CreateTabCreateMariaSql();
+            //CreateTabDoc();
 
             // 打开目录 (这个方法在windows平台有效)
             Process.Start(new ProcessStartInfo()
@@ -112,22 +106,23 @@ namespace AutoCode
                 throw new Exception("未填写表名!");
             if (string.IsNullOrWhiteSpace(cfg.NS))
                 throw new Exception("未填写命名空间!");
-            if (!(cfg.DataBaseType == 1 || cfg.DataBaseType == 2))
+
+            if (!(cfg.DataBaseType == DataBaseSrv.maria || cfg.DataBaseType == DataBaseSrv.sqlserver))
                 throw new Exception("数据库类型选项无效");
-            if (!(cfg.WebApiVersion == 1 || cfg.WebApiVersion == 2))
+            if (!(cfg.WebApiVersion == ApiVersion.netcore || cfg.WebApiVersion == ApiVersion.netframework))
                 throw new Exception("api版本选项无效");
             if (string.IsNullOrWhiteSpace(cfg.OutPutDir))
                 throw new Exception("未填写输出目录!");
-            if (!(cfg.FormLayout == 1 || cfg.FormLayout == 2))
+            if (!(cfg.FormLayout == FormLayoutStyle.list || cfg.FormLayout == FormLayoutStyle.grid))
                 throw new Exception("新增/编辑页面表单布局选项无效");
         }
 
-        private static void Init(string tabName, string nSpace, string outDir)
+        private static void Init(Cfg cfg)
         {
             // data init
-            tableName = tabName;
+            tableName = cfg.TableName;
             // 命名空间和类名首字母大写
-            nameSpace = nSpace.Substring(0, 1).ToUpper() + nSpace[1..];
+            nameSpace = cfg.NS.Substring(0, 1).ToUpper() + cfg.NS[1..];
             TableName = tableName.Substring(0, 1).ToUpper() + tableName[1..];
             entityTypeName = TableName + 'M';
             dalTypeName = TableName + "Dal";
@@ -135,8 +130,8 @@ namespace AutoCode
             apiTypeName = TableName + "Api";
 
             // outputdir 输出根目录
-            if (!string.IsNullOrWhiteSpace(outDir))
-                outRootDir = outDir;
+            if (!string.IsNullOrWhiteSpace(cfg.OutPutDir))
+                outRootDir = cfg.OutPutDir;
             // 以表名建立一个子目录
             outFileDir = $"{outRootDir}/{tableName}";
             Directory.CreateDirectory(outFileDir);
@@ -197,7 +192,7 @@ namespace AutoCode
         /// <summary>
         /// add/edit编辑页
         /// </summary>
-        private static void CreateAdd(int formLayout)
+        private static void CreateAdd(FormLayoutStyle formLayout)
         {
             var viewdata = new
             {
@@ -205,7 +200,7 @@ namespace AutoCode
                 TableName,
                 columns = columns
             };
-            BuildAndOutPutTemp(formLayout == 1 ? addTemp : addGridLayoutTemp, viewdata, $"{outFileDir}/{tableName}add.html");
+            BuildAndOutPutTemp(formLayout == FormLayoutStyle.list ? addTemp : addGridLayoutTemp, viewdata, $"{outFileDir}/{tableName}add.html");
         }
         /// <summary>
         /// detail详情页
@@ -221,7 +216,7 @@ namespace AutoCode
             BuildAndOutPutTemp(detailTemp, viewdata, $"{outFileDir}/{tableName}detail.html");
         }
 
-        private static void CreateApi(int apiVersion)
+        private static void CreateApi(ApiVersion apiVersion)
         {
             // json字段,按需返回. data.Select(o=>new{以下拼接字段内容,默认所有列名})
             StringBuilder sb = new StringBuilder();
@@ -248,7 +243,7 @@ namespace AutoCode
                 fieldList = fields_list,
                 fieldItem = fields_item
             };
-            BuildAndOutPutTemp(apiVersion == 1 ? apiCoreTemp : apiTemp, viewdata, $"{outFileDir}/{apiTypeName}.cs");
+            BuildAndOutPutTemp(apiVersion == ApiVersion.netcore ? apiCoreTemp : apiTemp, viewdata, $"{outFileDir}/{apiTypeName}.cs");
         }
 
         private static void CreateBll()
@@ -293,7 +288,7 @@ namespace AutoCode
 
 
         // 生成 dal
-        private static void CreateDal()
+        private static void CreateDal(DataBaseSrv databaseType)
         {
             var viewdata = new
             {
@@ -301,6 +296,7 @@ namespace AutoCode
                 nameSpace = nameSpace,
                 className = dalTypeName,
                 entityName = entityTypeName,
+                databaseSrv = databaseType,
                 queryFields = string.Join(",", columns.Select(o => o["fieldName"]))
             };
             BuildAndOutPutTemp(dalTemp, viewdata, $"{outFileDir}/{dalTypeName}.cs");

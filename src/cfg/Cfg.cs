@@ -4,6 +4,30 @@ using System.Text;
 
 namespace AutoCode
 {
+    public enum DataBaseSrv
+    {
+        maria = 1,
+        sqlserver = 2
+    }
+    public enum ApiVersion
+    {
+        netcore = 1,
+        netframework = 2
+    }
+    /// <summary>
+    /// 表单布局方式
+    /// </summary>
+    public enum FormLayoutStyle
+    {
+        /// <summary>
+        /// 垂直列,标题和输入框都独占一行
+        /// </summary>
+        list=1,
+        /// <summary>
+        /// 网格,标题和输入框并列一行
+        /// </summary>
+        grid=2
+    }
     /// <summary>
     /// 配置
     /// </summary>
@@ -24,11 +48,11 @@ namespace AutoCode
         /// <summary>
         /// Web API版本 1=.netcore(默认) 2=.netframework
         /// </summary>
-        public int WebApiVersion = 1;
+        public ApiVersion WebApiVersion = ApiVersion.netcore;
         /// <summary>
         /// 数据库类型 1=mariadb(默认) ,2=sqlserver 
         /// </summary>
-        public int DataBaseType = 1;
+        public DataBaseSrv DataBaseType = DataBaseSrv.maria;
         /// <summary>
         /// 输出目录 默认运行目录下的CreateCode文件夹
         /// </summary>
@@ -36,6 +60,6 @@ namespace AutoCode
         /// <summary>
         /// add.html页面表单项布局 1=标签,输入框单独一行(默认) 2=标签,输入框同一行,使用栅格布局
         /// </summary>
-        public int FormLayout = 1;
+        public FormLayoutStyle FormLayout = FormLayoutStyle.list;
     }
 }

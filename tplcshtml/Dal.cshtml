@@ -7,6 +7,14 @@ using @Model.nameSpace@(".DBM");
 
 @{ 
     string entityListType = Model.entityName + "[]";
+    AutoCode.DataBaseSrv dbserver = Model.databaseSrv;
+    string dataBaseServer = "MAria";
+    string partPageSql = "LIMIT @OffSetRows,@PageSize";
+    if(dbserver == AutoCode.DataBaseSrv.sqlserver)
+    {
+      dataBaseServer = "SQLServer";
+      partPageSql = "OFFSET @OffSetRows ROWS FETCH NEXT @PageSize ROWS ONLY";
+    }
 }
 namespace @Model.nameSpace@(".DAL")
 {
@@ -20,14 +28,15 @@ namespace @Model.nameSpace@(".DAL")
         public static @entityListType List(@Model.entityName para)
         {
             string where = SqlWhere(para);
-            string sql = $@@"SELECT @Model.queryFields
-                            FROM @Model.tableName
-                            WHERE {where}
-                            ORDER BY ctime DESC
-                            OFFSET @@OffSetRows ROWS FETCH NEXT @@PageSize ROWS ONLY";
+            string sql = $@@"
+SELECT @Model.queryFields
+FROM @Model.tableName
+WHERE {where}
+ORDER BY ctime DESC
+@partPageSql";
             string sqlcount = $@@"SELECT COUNT(id) FROM @Model.tableName WHERE {where}";
             //
-            SQLServer db = new SQLServer();
+            @dataBaseServer db = new();
             // 总条数(如果为0无需再查询)
             int count=0;
             var listcount = db.ExecuteScalar<@Model.entityName>(sqlcount, para);
@@ -47,12 +56,13 @@ namespace @Model.nameSpace@(".DAL")
         public static @entityListType All(@Model.entityName para)
         {
             string where = SqlWhere(para);
-            string sql = $@@"SELECT @Model.queryFields
-                            FROM @Model.tableName
-                            WHERE {where}
-                            ORDER BY ctime DESC";
+            string sql = $@@"
+  SELECT @Model.queryFields
+  FROM @Model.tableName
+  WHERE {where}
+  ORDER BY ctime DESC";
             //
-            SQLServer db = new SQLServer();
+            @dataBaseServer db = new();
             // 数据列表
             @entityListType data = db.ExecuteQuery<@Model.entityName, @Model.entityName>(sql, para);
             return data ?? null;
@@ -63,7 +73,7 @@ namespace @Model.nameSpace@(".DAL")
         /// </summary>
         /// <param name="para">查询条件参数</param>
         /// <returns></returns>
-        private static string SqlWhere(CustomsM para)
+        private static string SqlWhere(@Model.entityName para)
         {
             var dict = para.SqlPara = new Dictionary<string, object>();
             StringBuilder sb = new StringBuilder("1=1");
@@ -89,11 +99,12 @@ namespace @Model.nameSpace@(".DAL")
         {
             StringBuilder sb = new StringBuilder("1=1");
             string where = sb.ToString();
-            string sql = $@@"SELECT @Model.queryFields
-                            FROM @Model.tableName
-                            WHERE id=@@id and {where}";
+            string sql = $@@"
+  SELECT @Model.queryFields
+  FROM @Model.tableName
+  WHERE id=@@id and {where}";
             //
-            SQLServer db = new SQLServer();
+            @dataBaseServer db = new();
             // 数据列表
             @entityListType data = db.ExecuteQuery<@Model.entityName>(sql, para.Id,1);
             return data?[0];
@@ -107,7 +118,7 @@ namespace @Model.nameSpace@(".DAL")
         public static int Add(@Model.entityName para)
         {
             string insert = @@"INSERT INTO @Model.tableName (@Model.queryFields)";
-            SQLServer db = new SQLServer();
+            @dataBaseServer db = new();
             return db.Insert<@Model.entityName>(insert, para);
         }
 
@@ -121,7 +132,7 @@ namespace @Model.nameSpace@(".DAL")
             StringBuilder sb = new StringBuilder("1=1");
             string where = sb.ToString();
             string update = $@@"UPDATE @Model.tableName (@Model.queryFields) WHERE id=@@id and {where}";
-            SQLServer db = new SQLServer();
+            @dataBaseServer db = new();
             return db.Update<@Model.entityName>(update, para);
         }
 
@@ -134,7 +145,7 @@ namespace @Model.nameSpace@(".DAL")
         internal static bool ExistByField(string fieldName, string fieldVal)
         {
             string sql = $@@"SELECT COUNT(id) FROM @Model.tableName WHERE {fieldName}=@@fieldVal";
-            SQLServer db = new SQLServer();
+            @dataBaseServer db = new();
             object re = db.ExecuteScalar(sql, fieldVal, 1);
             if (re == null) return false;
             return long.Parse(re.ToString()) > 0;

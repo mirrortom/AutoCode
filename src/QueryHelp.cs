@@ -17,7 +17,7 @@ namespace AutoCode
         public static Dictionary<string, string>[] GetColumns(Cfg cfg)
         {
             Dictionary<string, object>[] data;
-            if (cfg.DataBaseType == 1)
+            if (cfg.DataBaseType == DataBaseSrv.maria)
             {
                 string sql = MariaSql(cfg.TableName);
                 MAria db = new(cfg.ConnStr);
