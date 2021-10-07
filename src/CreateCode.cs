@@ -71,17 +71,17 @@ namespace AutoCode
             FieldHelp.AddValidMaxLen(columns);
             FieldHelp.DbTypeAndLengthFormat(columns);
 
-            // create codes 生成各代码文件
+            // create codes 生成代码文件
             CreateDal(cfg.DataBaseType);
-            //CreateEntity();
-            //CreateBll();
-            //CreateApi(cfg.WebApiVersion);
-            //CreateList();
-            //CreateAdd(cfg.FormLayout);
-            //CreateDetail();
-            //CreateTool();
+            CreateEntity();
+            CreateBll();
+            CreateApi(cfg.WebApiVersion);
+            CreateList();
+            CreateAdd(cfg.FormLayout);
+            CreateDetail();
+            CreateTool();
             //CreateTabCreateMariaSql();
-            //CreateTabDoc();
+            CreateTabDoc();
 
             // 打开目录 (这个方法在windows平台有效)
             Process.Start(new ProcessStartInfo()
